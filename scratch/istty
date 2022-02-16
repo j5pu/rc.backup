@@ -1,4 +1,4 @@
 #!/bin/sh
 for i in 0 1 2; do
-  if test -t $i; then echo $i: is tty; else $i: no tty; fi
+  if test -t $i; then "echo ${i}: is tty"; else "echo ${i}: no tty"; fi
 done
