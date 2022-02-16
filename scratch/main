@@ -1,0 +1,4 @@
+#!/bin/sh
+. ./trap.sh
+>&2 echo "$0"
+"${PWD}/sub"

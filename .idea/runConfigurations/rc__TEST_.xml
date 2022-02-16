@@ -3,7 +3,7 @@
     <envs>
       <env name="RC_TEST" value="./tmp" />
     </envs>
-    <option name="scriptPath" value="$PROJECT_DIR$/rc" />
+    <option name="scriptPath" value="$PROJECT_DIR$/bin/rc" />
     <EXTENSION ID="net.ashald.envfile">
       <option name="IS_ENABLED" value="true" />
       <option name="IS_SUBST" value="true" />
