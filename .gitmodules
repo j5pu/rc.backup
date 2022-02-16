@@ -10,3 +10,6 @@
 [submodule "bats-core"]
 	path = share/bats-core
 	url = https://github.com/bats-core/bats-core.git
+[submodule "prefsniff"]
+	path = share/prefsniff
+	url = https://github.com/zcutlip/prefsniff.git

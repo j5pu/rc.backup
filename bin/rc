@@ -15,32 +15,134 @@
 # curl -fsSL mnopi.com/sudoers | sh  # Will fail
 # sh -c "$(curl -fksSL https://mnopi.com/sudoers)"  # Will not fail
 
-set -eux
+set -eu
+
+bin_install_brew () {
+  file="${RC_BIN}/install-brew"
+  header "${file}"
+  cat >> "${file}" <<'EOF'
+#######################################
+# install brew and its dependencies
+# Arguments:
+#   None
+# Returns:
+#   1 if dependencies can not be met or brew installer errors
+#######################################
+main () {
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
+main "$@"
+EOF
+  type install-brew >/dev/null
+}
+
+bin_dir_has_files () {
+  file="${RC_BIN}/dir-has-files"
+  header "${file}"
+  cat >> "${file}" <<'EOF'
+#######################################
+# has the directory any files, including hidden
+# Arguments:
+#   directory   path to directory (default: cwd)
+# Returns:
+#   1 if directory does not have files or does not exist
+#######################################
+main () {
+  test -d "${1:-.}" && [ -n "$(find "${1:-.}" -maxdepth 1 -type f)" ]
+}
+
+main "$@"
+EOF
+  type "${RC_BIN}/dir-has-files" >/dev/null
+}
+
+bin_dir_is_empty () {
+  file="${RC_BIN}/dir-is-empty"
+  header "${file}"
+  cat >> "${file}" <<'EOF'
+#######################################
+# is directory empty, including hidden files and folders
+# Arguments:
+#   directory   path to directory (default: cwd)
+# Returns:
+#   1 if directory is empty or does not exist
+#######################################
+main () {
+  test -d "${1:-.}" && [ -z "$(find "${1:-.}" -mindepth 1 -maxdepth 1)" ]
+}
+
+main "$@"
+EOF
+  type dir-is-empty >/dev/null
+
+}
+
+bin_dir_to_colon () {
+  file="${RC_BIN}/dir-to-colon"
+  header "${file}"
+  cat >> "${file}" <<'EOF'
+#######################################
+# parse directory
+# Arguments:
+#  directory    compat directory which has files with literal paths or variables which will be 'eval'
+#######################################
+parse () {
+  awk 'NF { print $0 }' "${1}"/* | while read -r i; do
+    i="$(eval echo "$i")"
+    ! test -d "${i}" || printf '%s:' "${i}"
+  done
+}
+
+#######################################
+# creates a colon output with all lines in compat directory, lines could be literal or shell variables withouth quotes
+# Arguments:
+#  directory    compat directory which has files with literal paths or variables which will be 'eval' (default: cwd)
+#######################################
+main () {
+  if "${RC_BIN}/dir-has-files" "${1:-.}"; then
+    rv="$(parse "${1:-.}")"
+    [ "${rv-}" ] && printf '%s' "${rv%?}"
+  else
+    false
+  fi
+}
+
+main "$@"
+
+EOF
+  type "${RC_BIN}/dir-to-colon" >/dev/null
+}
 
 bin_sudo () {
   file="${RC_BIN}/sudo"
-  cat > "${file}" <<EOF
-#!/bin/sh
-
-${GENERATED_BY}
-
-if [ "\${SUDOC}" ] && [ "\${1-}" = '-S' ] && [ "\${PASSWORD-}" ]; then
-  echo "\${PASSWORD}" | exec "\${SUDOC}" "\$@"
-elif [ "\${SUDOC}" ]; then 
-  exec "\${SUDOC}" "\$@"
+  header "${file}"
+  cat >> "${file}" <<'EOF'
+#######################################
+# sudo wrapper when no sudo is installed
+# Globals:
+#   SUDOC       sudo command path
+# Arguments:
+#   sudo arguments
+#######################################
+main () {
+if [ "${SUDOC}" ] && [ "${1-}" = '-S' ] && [ "${PASSWORD-}" ]; then
+  echo "${PASSWORD}" | exec "${SUDOC}" "$@"
+elif [ "${SUDOC}" ]; then
+  exec "${SUDOC}" "$@"
 else
-  case "\${1-}" in -K|-S) shift ;; esac
-  "\$@"
+  case "${1-}" in -K|-S) shift ;; esac
+  "$@"
 fi
-EOF
-  type sudo >/dev/null
+}
 
-  mkdir "${ETC}/sudoers.d"
+main "$@"
+EOF
+  PATH="$(echo "${PATH}" | sed 's|/usr/bin:||')" type sudo >/dev/null
 }
 
 file_etc_profile () {
-  ETC_PROFILE="${ETC}/profile"
-  cat > "${ETC_PROFILE}" <<EOF
+  cat > "${CHROOT_ETC_PROFILE}" <<EOF
 # shellcheck shell=sh
 
 $(cat /etc/profile)
@@ -49,14 +151,14 @@ ${GENERATED_BY}
 
 EOF
 
-  cat >> "${ETC_PROFILE}" <<'EOF'
-# $RC_PREFIX used for installation temp dir unless $RC_TEST is defined (no copy to /etc will be done if $RC_TEST is set)
+  cat >> "${CHROOT_ETC_PROFILE}" <<'EOF'
+# $RC_PREFIX temp dir for installation unless $RC_TEST is defined (no copy to '/etc' will be done if $RC_TEST is set)
 #
 export RC_PREFIX
 # RC path 
 #
 export RC="${RC_PREFIX-}/etc/rc"
-# RC profile that will source all compat dirs
+# Profile that will source all compat dirs
 #
 export RC_PROFILE="${RC}/profile"
 
@@ -69,32 +171,56 @@ EOF
   # shellcheck disable=SC2153
   touch "${RC_PROFILE}"
   # shellcheck disable=SC2016
-  echo '. "${RC_PROFILE}"' >> "${ETC_PROFILE}"
+  echo '. "${RC_PROFILE}"' >> "${CHROOT_ETC_PROFILE}"
 
   rebash
 }
 
 file_rc_paths_d () {
-  x=50
-  # shellcheck disable=SC2016
-  for i in "${PYTHON_PREFIX}/sbin" "${PYTHON_PREFIX}/bin" /sw/sbin /sw/bin /opt/sbin /opt/bin "${RC_BIN}" "${RC_LIB}" \
-    '${LINUXBREW:+${LINUXBREW}/sbin}' '${LINUXBREW:+${LINUXBREW}/bin}' \
-    /usr/local/sbin /usr/local/bin '${CLT:+${CLT}/usr/bin}'; do
-    name="$(echo "${i}" | sed 's|/|_|g; s|$||g; s|{||g; s|}||g; s|:||g; s|+||g')"
-    x=$((x = x + 1))
-    echo "${i}" > "${RC_PATHS_D}/${x}-${name}"
-    if echo "${i}" | grep -q '/bin'; then 
-      i="$(echo "${i}" | sed 's|/bin|/share/man|')"
-      echo "${i}" > "${RC_MANPATHS_D}/${x}-${name}"
+  tmp_paths="$(mktemp)"
+  cat > "${tmp_paths}" <<'EOF'
+${HOME:+${HOME}/bin}
+${HOME:+${HOME}/.local/bin}
+${PY_PREFIX}/sbin
+/sw/sbin
+/opt/sbin
+${RC_BIN}
+${RC_LIB}
+${LINUXBREW:+${LINUXBREW}/sbin}
+/usr/local/sbin
+${CLT:+${CLT}/usr/sbin}
+/usr/sbin
+/sbin
+EOF
+  # CAUTION: Do not pass 100
+  x=30
+  y=3
+  filename () { echo "${x}-$(echo "${i}" | sed -e 's|^.*{||g; s|^/||g; s|/|_|g; s|}||g')"; }
+  while read -r i; do
+    echo "${i}" > "${RC_PATHS_D}/$(filename)"
+    if echo "${i}" | grep -q '/sbin'; then
+      i="$(echo "${i}" | sed 's|/sbin|/share/man|')"
+      echo "${i}" > "${RC_MANPATHS_D}/$(filename)"
       i="$(echo "${i}" | sed 's|/man|/info|')"
-      echo "${i}" > "${RC_INFOPATHS_D}/${x}-${name}"
+      echo "${i}" > "${RC_INFOPATHS_D}/$(filename)"
+      x=$((x = x + 1))
+      i="$(echo "${i}" | sed 's|/share/info|/bin|')"
+      echo "${i}" > "${RC_PATHS_D}/$(filename)"
+    elif [ "${i}" = 'RC_BIN' ]; then
+      # shellcheck disable=SC2016
+      i='${RC_MAN}'
+      echo "${i}" > "${RC_MANPATHS_D}/$(filename)"
+      # shellcheck disable=SC2016
+      i='${RC_MAN}'
+      echo "${i}" > "${RC_INFOPATHS_D}/$(filename)"
     fi
-  done
+    x=$((x = x + y))
+  done < "${tmp_paths}"
 }
 
 file_rc_profile_vars () {
   cat > "${RC_PROFILE}" <<'EOF'
-# RC bin path used for instalation: added to PATH during instalation
+# RC bin path used for installation: added to PATH during installation
 #
 export RC_BIN="${RC}/bin"
 
@@ -102,23 +228,27 @@ export RC_BIN="${RC}/bin"
 #
 export RC_COMPLETIONS_D="${RC}/completions.d"
 
-# RC $INFOPATH compat dir: sourced in order by $RC_PROFILE after $RC_PROFILE_D, they can have a variable already defined in $RC_PROFILE_D 
+# RC $INFOPATH compat dir: sourced in order by $RC_PROFILE after $RC_PROFILE_D,
+# they can have a variable already defined in $RC_PROFILE_D
 #
 export RC_INFOPATHS_D="${RC}/infopaths.d"
 
-# RC lib path used for instalation: not sourced by $RC_PROFILE
+# RC lib path used for installation: not sourced by $RC_PROFILE
 #
 export RC_LIB="${RC}/lib"
 
-# RC rc.d compat dir: sourced in order ??-*.sh by $RC_PROFILE after $RC_PROFILE_D, install here if depend on $RC_PROFILE_D
+# rc.d compat dir: sourced in order ??-*.sh by $RC_PROFILE after $RC_PROFILE_D,
+# install here if depend on $RC_PROFILE_D
 #
 export RC_D="${RC}/rc.d"
 
-# RC $MANPATH compat dir: sourced in order by $RC_PROFILE after $RC_PROFILE_D, they can have a variable already defined in $RC_PROFILE_D 
+# RC $MANPATH compat dir: sourced in order by $RC_PROFILE after $RC_PROFILE_D,
+# they can have a variable already defined in $RC_PROFILE_D
 #
 export RC_MANPATHS_D="${RC}/manpaths.d"
 
-# RC $PATH compat dir: sourced in order by $RC_PROFILE after $RC_PROFILE_D, they can have a variable already defined in $RC_PROFILE_D 
+# RC $PATH compat dir: sourced in order by $RC_PROFILE after $RC_PROFILE_D,
+# they can have a variable already defined in $RC_PROFILE_D
 #
 export RC_PATHS_D="${RC}/paths.d"
 
@@ -150,83 +280,64 @@ EOF
   rebash
 }
 
-
 file_rc_profile_source () {
   cat >> "${RC_PROFILE}" <<'EOF'
-files="$(find "${RC_PROFILE_D}" -maxdepth 1 -type f | sort)"
-for i in ${files}; do
-  # shellcheck disable=SC1090,SC1091
-  . "${i}"
-done
+# shellcheck disable=SC1090,SC1091
+. "${RC_LIB}/source_dir.sh"
+source_dir "${RC_PROFILE_D}"
 
-PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+if i="$("${RC_BIN}/dir-to-colon" "${RC_PATHS_D}")"; then
+  export PATH="${i}"
+fi
 
-! test -d /etc/paths.d || files="$(find /etc/paths.d -maxdepth 1 -type f | sort)"
-for i in ${files}; do
-  [ ! -d "${i}" ] || PATH="${PATH}:${i}"
-done
+if i="$(dir-to-colon /etc/paths.d)"; then
+  export PATH="${PATH}:${i}"
+fi
 
-files="$(find "${RC_PATHS_D}" -maxdepth 1 -type f | sort)"
-for i in ${files}; do
-  [ "${i%"${i#?}"}" != '$' ] || i="$(eval echo "${i}")"
-  [ ! -d "${i}" ] || PATH="${i}:${PATH}"
-done
-
-export PATH
-
-! test -d /etc/manpaths.d || files="$(find /etc/manpaths.d -maxdepth 1 -type f | sort)"
 unset MANPATH
-for i in ${files}; do
-  [ ! -d "${i}" ] || MANPATH="${i}${MANPATH:+:${MANPATH}}:"
-done
+if i="$(dir-to-colon /etc/manpaths.d)"; then
+  export MANPATH="${i}:${MANPATH-}"
+fi
+if i="$(dir-to-colon "${RC_MANPATHS_D}")"; then
+  export MANPATH="${i}:${MANPATH-}"
+fi
 
-files="$(find "${RC_MANPATHS_D}" -maxdepth 1 -type f | sort)"
-for i in ${files}; do
-  [ "${i%"${i#?}"}" != '$' ] || i="$(eval echo "${i}")"
-  [ ! -d "${i}" ] || MANPATH="${i}${MANPATH:+:${MANPATH}}:"
-done
-
-files="$(find "${RC_INFOPATHS_D}" -maxdepth 1 -type f | sort)"
 unset INFOPATH
-for i in ${files}; do
-  [ "${i%"${i#?}"}" != '$' ] || i="$(eval echo "${i}")"
-  [ ! -d "${i}" ] || INFOPATH="${i}${INFOPATH:+:${INFOPATH}}"
-done
-export INFOPATH 
+if i="$(dir-to-colon "${RC_INFOPATHS_D}")"; then
+  export INFOPATH="${i}${INFOPATH:+:${INFOPATH}}"
+fi
 
-files="$(find "${RC_D}" -maxdepth 1 -type f | sort)"
-for i in ${files}; do
-  # shellcheck disable=SC1090,SC1091
-  . "${i}"
-done
-unset files i
+source_dir "${RC_D}"
 
 EOF
   rebash
   [ "${UNAME-}" ] || print \$UNAME: Undefined
+  type dir-has-files >/dev/null
 }
 
-file_rc_profile_py_prefix_sh () {
+file_rc_profile_d_py_prefix_sh () {
   file="${RC_PROFILE_D}/py_prefix.sh"
   header sh "${file}"
-  cat >> "${file}" <<EOF
+  cat >> "${file}" <<'EOF'
 # Python prefix
-export PYTHON_PREFIX='/py'
+export PY_PREFIX='/py'
 EOF
-  rebash
+  # shellcheck disable=SC1090,SC1091
+  . "${file}"
+  [ "${PY_PREFIX-}" ] || print "Undefined: \$PY_PREFIX [${file}]"
 }
 
-
-file_rc_profile_d_sudo_sh () {
+file_rc_profile_d_sudoc_sh () {
   file="${RC_PROFILE_D}/sudo.sh"
   header sh "${file}"
-  cat >> "${file}" <<EOF
+  cat >> "${file}" <<'EOF'
 # Sudo command
-SUDOC="\$([ ! -x /usr/bin/sudo ] || printf '%s' /usr/bin/sudo)"; export SUDOC
+SUDOC="$([ ! -x /usr/bin/sudo ] || printf '%s' /usr/bin/sudo)"; export SUDOC
 EOF
-  rebash
+  # shellcheck disable=SC1090,SC1091
+  . "${file}"
+  ! test -x /usr/bin/sudo || [ "${SUDOC-}" ] || print "Undefined: \$SUDOC [${file}]"
 }
-
 
 file_rc_profile_d_system_sh () {
   file="${RC_PROFILE_D}/system.sh"
@@ -455,7 +566,7 @@ export SSH
 #
 export UBUNTU
 
-# <html><h2>Operating System System Name</h2>
+# <html><h2>Operating System Name</h2>
 # <p><strong><code>$UNAME</code></strong> (always exported).</p>
 # <ul>
 # <li><code>Darwin</code></li>
@@ -599,19 +710,19 @@ system() {
 
 system; unset -f system
 }
-
 EOF
 
   # shellcheck disable=SC1090,SC1091
   . "${file}"
+  [ "${DIST_VERSION-}" ] || print "Undefined: \$DIST_VERSION [${file}]"
 }
 
 header () {
   case "${1}" in 
     bash|sh) shebang="# shellcheck shell=${1}"; shift ;;
-    *) shebang='#!/bin/sh'; touch "${1}"; chmod +x "${1}" ;;
+    *) shebang='#!/bin/sh'; header="$(printf '%s\n' "${GENERATED_BY}" "set -eu")"; touch "${1}"; chmod +x "${1}";;
   esac
-  text="$(printf '%s\n' "${GENERATED_BY}")"; [ ! "${2-}" ] || text="$(printf '%s\n' "${text}" "" "${2}")"
+  text="$(printf '%s\n' "${header:-${GENERATED_BY}}")"; [ ! "${2-}" ] || text="$(printf '%s\n' "${text}" "" "${2}")"
   ex "${1}" <<EOF
 1 insert
 ${shebang}
@@ -623,7 +734,7 @@ xit
 EOF
 }
 
-lib_print_sh() {
+lib_print_sh () {
   file="${RC_LIB}/print.sh"
   header "${file}"
   cat >> "${file}" <<'EOF' 
@@ -649,6 +760,30 @@ EOF
   type print >/dev/null
 }
 
+lib_source_dir_sh () {
+  file="${RC_LIB}/source_dir.sh"
+  header "${file}"
+  cat >> "${file}" <<'EOF'
+#######################################
+# sources all files in the first level of a directory, including hidden files
+# Arguments:
+#  directory    path of directory to source (default: cwd).
+#######################################
+source_dir () {
+  if "${RC_BIN}/dir-has-files" "${1:-.}"; then
+    for i in "${1:-.}"/*; do
+      # shellcheck disable=SC1090,SC1091
+      . "${i}"
+    done
+    unset files i
+  fi
+}
+EOF
+  # shellcheck disable=SC1090,SC1091
+  . "${file}"
+  type source_dir >/dev/null
+}
+
 lib_stderr_sh () {
   file="${RC_LIB}/stderr.sh"
   header "${file}"
@@ -658,7 +793,7 @@ trap stderr EXIT
 exec 2>"${STDERR}"
 
 stderr() { 
-  # set -u err not catched in signal EXIT.
+  # set -u err not caught in signal EXIT.
   rc=$?
   if [ $rc -eq 0 ] && grep -qE ': unbound variable$|: parameter null or not set' "${STDERR}"; then rc=1; fi
   if echo $- | grep -q x || [ $rc -ne 0 ]; then
@@ -676,8 +811,33 @@ EOF
 rebash () {
   set +u  # PS1 and other variables exported but with no value
   # shellcheck disable=SC1090,SC1091
-  . "${ETC_PROFILE}"
+  . "${CHROOT_ETC_PROFILE}"
   set -u
+}
+
+run_chroot () {
+
+  file_etc_profile
+  file_rc_profile_vars
+
+  lib_print_sh  # used by: lib_stderr_sh
+  lib_stderr_sh
+
+  bin_dir_has_files  # used by: lib_source_dir_sh
+  lib_source_dir_sh  # used by: file_rc_profile_source
+  bin_dir_to_colon  #  used by: file_rc_profile_source
+
+  file_rc_profile_d_py_prefix_sh
+  file_rc_profile_d_sudoc_sh
+  file_rc_profile_d_system_sh
+
+  file_rc_paths_d  # Last file before source to have all variables in profile_d
+  file_rc_profile_source
+
+  bin_dir_is_empty
+  bin_sudo
+  bin_install_brew
+
 }
 
 main () {
@@ -688,22 +848,12 @@ main () {
   GENERATED_BY="## GENERATED by: rc"
   rm -rf "${RC_TEST:-}"
   RC_PREFIX="${RC_TEST:-$(mktemp -d)}"; mkdir -p "${RC_PREFIX}"
-  ETC="${RC_PREFIX}/etc"; mkdir "${ETC}"
+  CHROOT="${RC_PREFIX}"
+  CHROOT_ETC="${CHROOT}/etc"; mkdir "${CHROOT_ETC}"
+  CHROOT_ETC_PROFILE="${CHROOT_ETC}/profile"
+  CHROOT_ETC_SUDOERS_D="${CHROOT_ETC}/sudoers.d";  mkdir "${CHROOT_ETC_SUDOERS_D}"
 
-  file_etc_profile
-  file_rc_profile_vars
-
-  lib_stderr_sh
-  lib_print_sh
-
-  file_rc_profile_d_system_sh
-  file_rc_profile_d_py_prefix_sh
-  file_rc_profile_d_sudo_sh
-
-  file_rc_paths_d  # Last file before source to have all variables in profile_d
-  file_rc_profile_source
-
-  bin_sudo 
+  run_chroot
 
   env
   # password

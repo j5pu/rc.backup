@@ -1,0 +1,219 @@
+#!/bin/bash
+
+# https://github.com/mnopi/scripts/tree/main/defaults.d
+# TODO: creo que voy a quitar el sudo, ya que si no se ha hecho login entonces los ficheros estarán incompletos.
+
+#######################################
+# set default if different
+# Globals:
+#   LOGOUT
+# Synopsys:
+#   defaults plist value [--key <key>] [-currentHost] [-g] [-array|-bool|-float|-int|-string]
+#                        [--library] [--logout] [--sudo]
+# Translates to:
+#   [sudo] defaults [-currentHost] read [-g] plist [key]
+#   [sudo] defaults [-currentHost] write [-g] plist [key] [-array|-bool|-float|-int|-string] value
+# Arguments:
+#   plist                                 property path or name.
+#   value                                 new value.
+#   [--key <key>]                         property key in plist.
+#   [--library]                           adds /Library/Preferences to plist and .plist suffix when sudo.
+#   [--logout]                            show logout message if changed and applicable when everything is finished.
+#   [--sudo]                              use with sudo.
+#   [-currentHost]                        ByHost, pass the option to the command.
+#   [-g]                                  global domain, pass the option to the command .
+#   [-array|-bool|-float|-int|-string]    type, pass the option to the command.
+# Examples:
+#   # defaults write -g com.apple.keyboard.fnState -bool true
+#   $ defaults com.apple.keyboard.fnState true -g -bool --logout
+#
+#   # defaults write -g com.apple.swipescrolldirection -bool false
+#   $ defaults com.apple.swipescrolldirection false -g -bool --logout
+#
+#   # defaults write com.apple.driver.AppleBluetoothMultitouch.mouse MouseButtonMode TwoButton
+#   $ defaults com.apple.driver.AppleBluetoothMultitouch.mouse TwoButton --key MouseButtonMode --logout
+#######################################
+defaults() {
+  local check command=(command defaults) index key=() last library logout new plist=() previous user value=() write=()
+
+  plist+=("$1")
+  shift
+
+  if [ "$1" = 'ARRAY' ]; then
+    value+=("${ARRAY[@]}")
+    new=("${ARRAY[@]}")
+    last="${ARRAY[${#ARRAY[@]} - 1]}"
+    check="$(cat <<EOF
+(
+$(printf '    %s,\n' "${ARRAY[@]}" | sed "s|${last},|${last}|")
+)
+EOF
+)"
+  else
+    value+=("$1")
+    case "$1" in false) check=0 ;; true) check=1 ;; *) check="$1" ;; esac
+  fi
+  shift
+
+  while (($#)); do
+    case "$1" in
+      --key)
+        shift
+        key+=("$1")
+        ;;
+      --library) library=1 ;;
+      --logout) logout=1 ;;
+      --sudo)
+        command=("${1#--}" "${command[@]}")
+        user="root"
+        ;;
+      -array | -bool | -float | -int | -string) value=("$1" "${value[@]}") ;;
+      -currentHost) command+=("$1") ;;
+      -g) plist=("$1" "${plist[@]}") ;;
+    esac
+    shift
+  done
+
+  if [ "${library:-0}" -eq 1 ] && [ "${command[0]}" = 'sudo' ]; then
+    index="$(( ${#plist[@]} - 1))"
+    plist[${index}]="/Library/Preferences/${plist[${index}]}.plist"
+  fi
+
+  write+=("${command[@]}" write "${plist[@]}" "${key[@]}" "${value[@]}")
+  # shellcheck disable=SC2001
+  sed 's/command //' <<< "${write[*]}"
+  previous="$("${command[@]}" read "${plist[@]}" "${key[@]}")"
+  if [ "${previous}" != "${check}" ]; then
+    # TODO:
+    # "${write[@]}" >/dev/null
+    [ "${new-}" ] || new=("${value[${#value[@]} - 1]}")
+    # TODO:
+    # print Defaults: "$(basename "${plist[${#plist[@]} - 1]}" .plist)" "[ ${previous} => ${new[*]} ]"
+    echo "Defaults [${user:-${USER}}]: $(basename "${plist[${#plist[@]} - 1]}" .plist)" "[ ${previous} => ${new[*]} ]"
+    CHANGED=1
+    [ "${logout:-0}" -eq 0 ] || LOGOUT=1
+  fi
+}
+
+#######################################
+# sets System Preferences -> Keyboard
+# Arguments:
+#  None
+#######################################
+keyboard() {
+  # Keyboard -> Use F1, F2, etc. keys as standard function keys.
+  defaults com.apple.keyboard.fnState true -g -bool
+}
+
+#######################################
+# sets System Preferences -> Language & Region
+# Arguments:
+#  None
+#######################################
+language::region() {
+  local actual timezone
+  # General -> Preferred languages
+  ARRAY=('"en-US"' '"es-ES"')
+  defaults AppleLanguages ARRAY -g -array
+  defaults AppleLanguages ARRAY -g -array --sudo 2>/dev/null || true
+  #defaults write NSGlobalDomain AppleLanguages -array "en-US" "es-ES"
+
+  # General -> Region & Advance General
+  defaults AppleLocale "en_ES@currency=EUR" -g -string
+  defaults AppleLocale "en_ES@currency=EUR" -g -string --sudo
+  defaults AppleMeasurementUnits "Centimeters" -g -string
+  defaults AppleMeasurementUnits "Centimeters" -g -string --sudo 2>/dev/null || true
+  defaults AppleMeasurementUnits true -g -bool
+  defaults AppleMeasurementUnits true -g -bool --sudo 2>/dev/null || true
+
+  timezone="Europe/Madrid"
+  actual="$(sudo systemsetup -gettimezone | sed 's/Time Zone: //')"
+  if [ "${actual}" != "${timezone}" ]; then
+    # TODO:
+    # sudo systemsetup -settimezone "${timezone}"
+    # TODO:
+    echo Defaults: "Timezone [ ${actual} => ${timezone} ]"
+    CHANGED=1
+  fi
+}
+
+#######################################
+# sets System Preferences -> Mouse
+# Arguments:
+#  None
+#######################################
+mouse() {
+  # Point & Click -> Scroll direction: [Natural: false]
+  defaults com.apple.swipescrolldirection false -g -bool --logout
+  defaults com.apple.swipescrolldirection false -g -bool --logout --sudo 2>/dev/null || true
+
+  # Point & Click -> Secondary click: [Click on right side: MouseButtonMode TwoButton]
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse TwoButton --key MouseButtonMode --logout
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse TwoButton --key MouseButtonMode --logout --sudo
+  defaults com.apple.AppleMultitouchMouse TwoButton --key MouseButtonMode --logout
+  defaults com.apple.AppleMultitouchMouse TwoButton --key MouseButtonMode --logout --sudo
+  defaults com.apple.driver.appleHIDMouse 2 --key Button2 -int --logout
+  defaults com.apple.driver.appleHIDMouse 2 --key Button2 -int --logout --sudo
+  defaults com.apple.driver.appleHIDMouse 2 --key Button2 -int --logout --sudo --library  # Don't think is needed.
+
+  # Point & Click -> Smart zoom: [Double-tap with one finger: MouseOneFingerDoubleTapGesture 1]
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 1 --key MouseOneFingerDoubleTapGesture -int --logout
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 1 --key MouseOneFingerDoubleTapGesture -int --logout --sudo
+  defaults com.apple.AppleMultitouchMouse 1 --key MouseOneFingerDoubleTapGesture -int --logout
+  defaults com.apple.AppleMultitouchMouse 1 --key MouseOneFingerDoubleTapGesture -int --logout --sudo
+  defaults com.apple.mouse.tapBehavior 1 -g -currentHost -int --logout
+  defaults com.apple.mouse.tapBehavior 1 -g -currentHost -int --logout --sudo 2>/dev/null || true
+
+  # Point & Click -> Tracking speed:
+  defaults com.apple.mouse.scaling 10 -g --logout
+  defaults com.apple.mouse.scaling 10 -g --logout --sudo 2>/dev/null || true
+  defaults com.apple.mouse.scaling 10 -g -currentHost --logout
+  defaults com.apple.mouse.scaling 10 -g -currentHost --logout --sudo 2>/dev/null || true
+  defaults /Library/Preferences/com.apple.mouse.scaling 10 -g --logout --sudo  # Don't think needed.
+
+  # More Gestures -> Swipe between pages: [Scroll left or right with one finger: 1]
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 1 --key MouseHorizontalScroll -int --logout
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 1 --key MouseHorizontalScroll -int --logout --sudo
+  defaults com.apple.AppleMultitouchMouse 1 --key MouseHorizontalScroll -int --logout
+  defaults com.apple.AppleMultitouchMouse 1 --key MouseHorizontalScroll -int --logout --sudo
+
+  # More Gestures -> Swipe between full-screen apps: [Scroll left or right with two fingers: 2]
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 2 --key MouseTwoFingerHorizSwipeGesture -int --logout
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 2 --key MouseTwoFingerHorizSwipeGesture -int --logout --sudo
+  defaults com.apple.AppleMultitouchMouse 2 --key MouseTwoFingerHorizSwipeGesture -int --logout
+  defaults com.apple.AppleMultitouchMouse 2 --key MouseTwoFingerHorizSwipeGesture -int --logout --sudo
+
+  # More Gestures -> Mission Control: [Double-tap with two fingers: 3]
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 3 --key MouseTwoFingerDoubleTapGesture -int --logout
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 3 --key MouseTwoFingerDoubleTapGesture -int --logout --sudo
+  defaults com.apple.AppleMultitouchMouse 3 --key MouseTwoFingerDoubleTapGesture -int --logout
+  defaults com.apple.AppleMultitouchMouse 3 --key MouseTwoFingerDoubleTapGesture -int --logout --sudo
+
+  # [User Preferences: 1]
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 1 --key UserPreferences -int --logout
+  defaults com.apple.driver.AppleBluetoothMultitouch.mouse 1 --key UserPreferences -int --logout --sudo
+  defaults com.apple.AppleMultitouchMouse 1 --key UserPreferences -int --logout
+  defaults com.apple.AppleMultitouchMouse 1 --key UserPreferences -int --logout --sudo
+}
+
+#######################################
+# defaults main function
+# Globals:
+#   LOGOUT
+# Arguments:
+#  None
+#######################################
+main() {
+  # TODO:
+  #. stderr.sh
+  #. print.sh
+  pkill -f "System Preferences" || true
+  keyboard
+  language::region
+  mouse
+  [ "${CHANGED:-0}" -eq 0 ] || echo Warning: Changes
+  [ "${LOGOUT:-0}" -eq 0 ] || echo Warning: Logout is Required
+
+}
+
+main "$@"
