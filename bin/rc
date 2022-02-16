@@ -19,41 +19,56 @@ set -eu
 
 bin_install_clt () {
   file="${RC_BIN}/install-clt"
-  header "${file}"
+  header /bin/bash "${file}"
   cat >> "${file}" <<'EOF'
-command -v xcode-select >/dev/null || exit
+#######################################
+# checks if command line tools needs to be installed
+# Globals:
+#   MACOS
+# Arguments:
+#   None
+#######################################
+needs() { xcrun --find git >/dev/null && ! test -x "${CLT}/usr/bin/git"; }
 
-CLT="/Library/Developer/CommandLineTools"
-
-[ "${1-}" != 'force' ] || rm -rf "${CLT}"
-
+#######################################
+# installs command line tools
+# Globals:
+#   MACOS
+# Arguments:
+#   None
+#######################################
 main() {
-  if ! test -d "${CLT}"; then
-    clt_placeholder="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
-    sudo touch "${clt_placeholder}"
-    echo "Command Line Tools: Installing"
-    sudo softwareupdate --install --all
-  fi
+  if $MACOS && needs; then
+    # shellcheck disable=SC1090,SC1091
+    . exit-stderr.sh; . print.sh
 
-  # Headless install may have failed, so fallback to original 'xcode-select' method
-  if ! test -d "${CLT}" && test -t 0; then
-    echo "Installing the Command Line Tools (expect a GUI popup):"
-    sudo "/usr/bin/xcode-select" "--install"
-    echo "Press any key when the installation has completed."
-    save_state="$(/bin/stty -g)"
-    /bin/stty raw -echo
-    IFS='' read -r -n 1 -d '' "$@"
-    /bin/stty "${save_state}"
-  fi
+    tmp="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+    sudo touch "${tmp}"
 
-  if test -d "${CLT}"; then
-    sudo "/usr/bin/xcode-select" "--switch" "${CLT}"
-    echo "Command Line Tools: Installed"
-  else
-    echo "Command Line Tools: Error"
-  fi
+    software-update
 
-  sudo "/bin/rm" "-f" "${clt_placeholder}"
+    sudo rm "${tmp}"
+
+    if needs; then
+      print --warning "Command Line Tools: GUI Install (expect a GUI popup):"
+      sudo xcode-select --install
+      print --warning "Press any key when the installation has completed."
+      if test -t 0; then
+        IFS='' read -r -n 1 -d '' "$@"
+      elif test -t 1; then
+        IFS='' read -r -n 1 -d '' "$@" </dev/stdout
+      else
+        print Command Line Tools: Not Installed because no tty
+      fi
+    fi
+
+    if needs;
+      false || print Command Line Tools: Error
+    elif ! sudo xcode-select -p >/dev/null ; then
+      sudo xcode-select --switch "${CLT}"
+      print "Command Line Tools: Path Switched"
+    fi
+  fi
 }
 
 main "$@"
@@ -159,6 +174,50 @@ EOF
   type "${RC_BIN}/dir-to-colon" >/dev/null
 }
 
+bin_software_update () {
+  file="${RC_BIN}/software-update"
+  header /bin/bash "${file}"
+  cat >> "${file}" <<'EOF'
+#######################################
+# labels to be updated
+# Globals:
+#   MACOS
+# Arguments:
+#   None
+#######################################
+labels () {
+  labels="$(sudo softwareupdate -l | awk -v p='.* Label: ' '$0 ~ p { gsub(p, ""); print $0 }')"
+  [ "${labels-}" ] && echo "${labels}"
+}
+
+#######################################
+# updates software
+# Globals:
+#   MACOS
+# Arguments:
+#   None
+#######################################
+main() {
+  local i label=true
+  if $MACOS; then
+    # shellcheck disable=SC1090,SC1091
+    . exit-stderr.sh; . print.sh
+
+    while labels; do
+      while read -r i; do
+        >&2 sudo softwareupdate --install "${i}"
+        print Software Update: "${i}"
+      done <<<"${labels}"
+    done
+  fi
+}
+
+main "$@"
+
+EOF
+  type software-update >/dev/null
+}
+
 bin_sudo () {
   file="${RC_BIN}/sudo"
   header "${file}"
@@ -219,6 +278,26 @@ EOF
   echo '. "${RC_PROFILE}"' >> "${CHROOT_ETC_PROFILE}"
 
   rebash
+}
+
+
+file_etc_sudoers () {
+  defaults='always_set_home, !authenticate, !env_reset, !logfile, shell_noargs, !syslog'
+  type man >/dev/null
+  runchroot=', runchroot=*'
+  man sudoers | grep -q runchroot || runchroot=''
+  runcwd=', runcwd=*'
+  man sudoers | grep -q runcwd || runcwd=''
+
+  cat > "${CHROOT_ETC_SUDOERS}" <<EOF
+${GENERATED_BY}
+
+User_Alias ADMINS = %admin, %sudo, %wheel
+Defaults:ADMINS ${defaults}, umask=$(umask), umask_override${runchroot}${runcwd}
+
+EOF
+
+
 }
 
 file_rc_paths_d () {
@@ -358,6 +437,26 @@ EOF
   rebash
   [ "${UNAME-}" ] || print \$UNAME: Undefined
   type dir-has-files >/dev/null
+}
+
+file_rc_profile_d_password_sh () {
+  file="${RC_PROFILE_D}/password.sh"
+  header sh "${file}"
+
+  { [ "${1-}" != '-' ] && [ "${1-}" != '--' ]; } || shift
+  password="${1:-${PASSWORD-}}"
+
+  if [ ! "${password-}" ] && [ "${SUDOC-}" ]; then
+    password
+  fi
+
+  cat >> "${file}" <<EOF
+# Admin password
+export PASSWORD='${password}'
+EOF
+  # shellcheck disable=SC1090,SC1091
+  . "${file}"
+  [ ! "${SUDOC-}" ] || [ "${PASSWORD-}" ] || print "Undefined: \$PASSWORD [${file}]"
 }
 
 file_rc_profile_d_py_prefix_sh () {
@@ -765,7 +864,13 @@ EOF
 header () {
   case "${1}" in 
     bash|sh) shebang="# shellcheck shell=${1}"; shift ;;
-    *) shebang='#!/bin/sh'; header="$(printf '%s\n' "${GENERATED_BY}" "set -eu")"; touch "${1}"; chmod +x "${1}";;
+    *)
+      shebang='#!/bin/sh'
+      [ "$1" != '/bin/bash' ] || { shebang='#!/bin/bash'; shift; }
+      header="$(printf '%s\n' "${GENERATED_BY}" "set -eu")"
+      touch "${1}"
+      chmod +x "${1}"
+      ;;
   esac
   text="$(printf '%s\n' "${header:-${GENERATED_BY}}")"; [ ! "${2-}" ] || text="$(printf '%s\n' "${text}" "" "${2}")"
   ex "${1}" <<EOF
@@ -830,15 +935,18 @@ EOF
 }
 
 lib_exit_stderr_sh () {
-  file="${RC_LIB}/exit-stderr.sh"
+  file="${RC_LIB:-$(mktemp -d)}/exit-stderr.sh"
   header "${file}"
   cat >> "${file}" <<'EOF' 
-[ "${EXIT_STDERR-}" ] || EXIT_STDERR="$(mktemp)"
-grep -q -- "trap -- exit_stderr EXIT" || trap exit_stderr EXIT
-test -f /dev/stderr || exec 2>"${EXIT_STDERR}"
+if test -t 2; then
+  EXIT_STDERR="$(mktemp)"
+  exec 2>"${EXIT_STDERR}"
+  trap print EXIT
+fi
 
 exit_stderr() {
   # set -u err not caught in signal EXIT.
+  # if lsof is posix then use: stderr="$(lsof -d2 | grep $$ | awk '{ print $NF }')"
   rc=$?
   if test -s "${EXIT_STDERR-}"; then
     if [ $rc -eq 0 ] && grep -qE ': unbound variable$|: parameter null or not set' "${EXIT_STDERR}"; then rc=1; fi
@@ -855,6 +963,19 @@ EOF
   type exit_stderr >/dev/null
 }
 
+password () {
+  password_msg () { >&1 printf '%s' 'Enter password: '; }
+  if test -t 0; then
+    password_msg
+    read -r password
+  elif test -t 1; then
+    password_msg
+    read -r password </dev/stdout
+  else
+    print Password: No tty
+  fi
+}
+
 rebash () {
   set +u  # PS1 and other variables exported but with no value
   # shellcheck disable=SC1090,SC1091
@@ -863,36 +984,49 @@ rebash () {
 }
 
 run_chroot () {
-
   file_etc_profile
+  file_etc_sudoers
   file_rc_profile_vars
 
-  lib_print_sh  # used by: lib_stderr_sh
+  lib_print_sh
   lib_exit_stderr_sh
+  lib_source_dir_sh  # used by: file_rc_profile_source
 
   bin_dir_has_files  # used by: lib_source_dir_sh
-  lib_source_dir_sh  # used by: file_rc_profile_source
   bin_dir_to_colon  #  used by: file_rc_profile_source
 
   file_rc_profile_d_py_prefix_sh
-  file_rc_profile_d_sudoc_sh
+  file_rc_profile_d_sudoc_sh  # used by: file_rc_profile_d_password_sh
+  file_rc_profile_d_password_sh "$@"
   file_rc_profile_d_system_sh
 
   file_rc_paths_d  # Last file before source to have all variables in profile_d
   file_rc_profile_source
 
   bin_dir_is_empty
-  bin_sudo
   bin_install_clt
   bin_install_brew
+  bin_software_update
+  bin_sudo
 
 }
 
+run_install () {
+  install-clt
+  # TODO: add if not container
+  install-brew
+}
+
+run_root (){
+  # copy files
+  :
+}
+
 main () {
+  lib_exit_stderr_sh  # starts trap with tmp dir installation (will be executed again to have it under $RC_LIB)
+
   umask 002
-
-  # parse "$@"
-
+  name="rc"
   GENERATED_BY="## GENERATED by: rc"
   rm -rf "${RC_TEST:-}"
   RC_PREFIX="${RC_TEST:-$(mktemp -d)}"; mkdir -p "${RC_PREFIX}"
@@ -900,8 +1034,11 @@ main () {
   CHROOT_ETC="${CHROOT}/etc"; mkdir "${CHROOT_ETC}"
   CHROOT_ETC_PROFILE="${CHROOT_ETC}/profile"
   CHROOT_ETC_SUDOERS_D="${CHROOT_ETC}/sudoers.d";  mkdir "${CHROOT_ETC_SUDOERS_D}"
+  CHROOT_ETC_SUDOERS="${CHROOT_ETC_SUDOERS_D}/${name}"
 
-  run_chroot
+  run_chroot "$@"
+  # run_root
+  # run_install
 
   env
   # password
