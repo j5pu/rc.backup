@@ -280,7 +280,6 @@ EOF
   rebash
 }
 
-
 file_etc_sudoers () {
   defaults='always_set_home, !authenticate, !env_reset, !logfile, shell_noargs, !syslog'
   type man >/dev/null
@@ -1041,7 +1040,6 @@ main () {
   # run_install
 
   env
-  # password
 }
 
 main "$@"

@@ -12,3 +12,5 @@
 * la variable de setup si era grafico o no 
 * dominio stateless functions
 * synthetic 
+* poner el código del worker aqui y publicar.
+* Publicar un paquete de brew, deb y de apk con post-install??
