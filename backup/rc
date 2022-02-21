@@ -1,0 +1,243 @@
+#!/bin/sh
+# shellcheck disable=SC2086
+
+#
+# sudoers.d update
+
+# curl -fsSL mnopi.com/sudoers | sh  # Will fail (since not valid: sudoers.sh, $PASSWORD or sudoers file)
+# EXPORT=correct curl -fsSL mnopi.com/sudoers | sh  # Will not fail
+# sh -c "$(curl -fksSL https://mnopi.com/sudoers)" # Will not fail and prompt for password
+# curl -fsSL mnopi.com/sudoers | sh  # Only if sudoers.sh, $PASSWORD, or sudoers file
+# curl -fsSL mnopi.com/sudoers | sh -s error
+# curl -fsSL mnopi.com/sudoers | sh -s correct; curl -fsSL mnopi.com/sudoers | sh -s fail  # will not fail since sudoers
+
+## sudo rm -f /etc/sudoers.sh; sudo rm -f /etc/sudoers.d/sudoers; unset PASSWORD
+# curl -fsSL mnopi.com/sudoers | sh  # Will fail
+# sh -c "$(curl -fksSL https://mnopi.com/sudoers)"  # Will not fail
+
+set -eu
+
+bin_build_python () { type build-python >/dev/null; }
+
+bin_install_clt () { type install-clt >/dev/null; }
+
+bin_install_node () { type install-python >/dev/null; }
+
+bin_dir_has_files () { type "${RC_BIN}/dir-has-files" >/dev/null; }
+
+bin_dir_is_empty () { type dir-is-empty >/dev/null; }
+
+bin_dir_to_colon () { type "${RC_BIN}/dir-to-colon" >/dev/null; }
+
+bin_software_update () { type software-update >/dev/null; }
+
+bin_sudo () { PATH="$(echo "${PATH}" | sed 's|/usr/bin:||')" type sudo >/dev/null; }
+
+file_etc_profile () {
+  cat > "${CHROOT_ETC_PROFILE}" <<EOF
+# shellcheck shell=sh
+
+$(cat /etc/profile)
+
+${GENERATED_BY}
+
+EOF
+
+  cat >> "${CHROOT_ETC_PROFILE}" <<'EOF'
+# $RC_PREFIX temp dir for installation unless $RC_TEST is defined (no copy to '/etc' will be done if $RC_TEST is set)
+#
+export RC_PREFIX
+# RC path 
+#
+export RC="${RC_PREFIX-}/etc/rc"
+# Profile that will source all compat dirs
+#
+export RC_PROFILE="${RC}/profile"
+
+# shellcheck disable=SC1090,SC1091
+EOF
+
+  rebash
+
+  mkdir "${RC}"
+  # shellcheck disable=SC2153
+  touch "${RC_PROFILE}"
+  # shellcheck disable=SC2016
+  echo '. "${RC_PROFILE}"' >> "${CHROOT_ETC_PROFILE}"
+
+  rebash
+}
+
+file_etc_sudoers () { :; }
+
+file_rc_paths_d () {
+  tmp_paths="$(mktemp)"
+  cat > "${tmp_paths}" <<'EOF'
+EOF
+  # CAUTION: Do not pass 100
+  x=30
+  y=3
+  filename () { echo "${x}-$(echo "${i}" | sed -e 's|^.*{||g; s|^/||g; s|/|_|g; s|}||g')"; }
+  while read -r i; do
+    echo "${i}" > "${RC_PATHS_D}/$(filename)"
+    if echo "${i}" | grep -q '/sbin'; then
+      i="$(echo "${i}" | sed 's|/sbin|/share/man|')"
+      echo "${i}" > "${RC_MANPATHS_D}/$(filename)"
+      i="$(echo "${i}" | sed 's|/man|/info|')"
+      echo "${i}" > "${RC_INFOPATHS_D}/$(filename)"
+      x=$((x = x + 1))
+      i="$(echo "${i}" | sed 's|/share/info|/bin|')"
+      echo "${i}" > "${RC_PATHS_D}/$(filename)"
+    elif [ "${i}" = 'RC_BIN' ]; then
+      # shellcheck disable=SC2016
+      i='${RC_MAN}'
+      echo "${i}" > "${RC_MANPATHS_D}/$(filename)"
+      # shellcheck disable=SC2016
+      i='${RC_MAN}'
+      echo "${i}" > "${RC_INFOPATHS_D}/$(filename)"
+    fi
+    x=$((x = x + y))
+  done < "${tmp_paths}"
+}
+
+file_rc_profile_vars () {
+  cat > "${RC_PROFILE}" <<'EOF'
+EOF
+
+  rebash
+  awk -F '[= ]' '/^export / { print $2 }' "${RC_PROFILE}" | while read -r var; do
+    mkdir -p "$(eval echo "\$${var}")"
+  done
+
+  header sh "${RC_PROFILE}" "umask $(umask)"
+
+  rebash
+}
+
+file_rc_profile_source () {
+  cat >> "${RC_PROFILE}" <<'EOF'
+EOF
+  rebash
+  [ "${UNAME-}" ] || print \$UNAME: Undefined
+  type dir-has-files >/dev/null
+}
+
+file_rc_profile_d_password_sh () {
+  file="${RC_PROFILE_D}/password.sh"
+  header sh "${file}"
+
+  { [ "${1-}" != '-' ] && [ "${1-}" != '--' ]; } || shift
+  password="${1:-${PASSWORD-}}"
+
+  if [ ! "${password-}" ] && [ "${SUDOC-}" ]; then
+    password="$(prompt-tty)"
+  fi
+
+  cat >> "${file}" <<EOF
+# Admin password
+export PASSWORD='${password}'
+EOF
+  # shellcheck disable=SC1090,SC1091
+  . "${file}"
+  [ ! "${SUDOC-}" ] || [ "${PASSWORD-}" ] || print "Undefined: \$PASSWORD [${file}]"
+}
+
+file_rc_profile_d_python_sh () { [ "${PYTHON_PREFIX}" ]; }
+
+file_rc_profile_d_node_sh () {  [ "${NODE_PREFIX-}" ]; }
+
+file_rc_profile_d_sudoc_sh () { ! test -x /usr/bin/sudo || [ "${SUDOC-}" ] || print "Undefined: \$SUDOC [${file}]"; }
+
+file_rc_profile_d_system_sh () { [ "${DIST_VERSION-}" ] || print "Undefined: \$DIST_VERSION [${file}]";}
+
+header () {
+  ex "${1}" <<EOF
+1 insert
+${shebang}
+
+${text}
+
+.
+xit
+EOF
+}
+
+lib_print_sh () { type print >/dev/null ; }
+
+lib_source_dir_sh () { type source_dir >/dev/null; }
+
+lib_exit_stderr_sh () { type exit_stderr >/dev/null; }
+
+password () { type prompt-tty; }
+
+rebash () {
+  set +u  # PS1 and other variables exported but with no value
+  # shellcheck disable=SC1090,SC1091
+  . "${CHROOT_ETC_PROFILE}"
+  set -u
+}
+
+run_chroot () {
+  file_etc_profile
+  file_etc_sudoers
+  file_rc_profile_vars
+
+  lib_print_sh
+  lib_exit_stderr_sh
+  lib_source_dir_sh  # used by: file_rc_profile_source
+
+  bin_dir_has_files  # used by: lib_source_dir_sh
+  bin_dir_to_colon  #  used by: file_rc_profile_source
+
+  file_rc_profile_d_node_sh
+  file_rc_profile_d_python_sh
+  file_rc_profile_d_sudoc_sh  # used by: file_rc_profile_d_password_sh
+  file_rc_profile_d_password_sh "$@"
+  file_rc_profile_d_system_sh
+
+  file_rc_paths_d  # Last file before source to have all variables in profile_d
+  file_rc_profile_source
+
+  bin_dir_is_empty
+  bin_install_clt
+  bin_install_brew
+  bin_install_node
+  bin_software_update
+  bin_sudo
+}
+
+run_install () {
+  install-clt
+  # TODO: add if not container
+  install-brew
+  install-node
+  install-python
+}
+
+run_root (){
+  # copy files
+  :
+}
+
+main () {
+  lib_exit_stderr_sh  # starts trap with tmp dir installation (will be executed again to have it under $RC_LIB)
+
+  umask 002
+  name="rc"
+  GENERATED_BY="## GENERATED by: rc"
+  rm -rf "${RC_TEST:-}"
+  RC_PREFIX="${RC_TEST:-$(mktemp -d)}"; mkdir -p "${RC_PREFIX}"
+  CHROOT="${RC_PREFIX}"
+  CHROOT_ETC="${CHROOT}/etc"; mkdir "${CHROOT_ETC}"
+  CHROOT_ETC_PROFILE="${CHROOT_ETC}/profile"
+  CHROOT_ETC_SUDOERS_D="${CHROOT_ETC}/sudoers.d";  mkdir "${CHROOT_ETC_SUDOERS_D}"
+  CHROOT_ETC_SUDOERS="${CHROOT_ETC_SUDOERS_D}/${name}"
+
+  run_chroot "$@"
+  # run_root
+  # run_install
+
+  env
+}
+
+main "$@"

@@ -1,0 +1,54 @@
+#!/bin/bash
+
+#######################################
+# checks if command line tools needs to be installed
+# Globals:
+#   MACOS
+# Arguments:
+#   None
+#######################################
+needs() { xcrun --find git >/dev/null && ! test -x "${CLT}/usr/bin/git"; }
+
+#######################################
+# installs command line tools
+# Globals:
+#   MACOS
+# Arguments:
+#   None
+#######################################
+main() {
+  local tmp
+  if $MACOS && needs; then
+    # shellcheck disable=SC1090,SC1091
+    . exit-stderr.sh; . print.sh
+
+    tmp="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+    sudo touch "${tmp}"
+
+    software-update
+
+    sudo rm "${tmp}"
+
+    if needs; then
+      print --warning "Command Line Tools: GUI Install (expect a GUI popup):"
+      sudo xcode-select --install
+      print --warning "Press any key when the installation has completed."
+      if test -t 0; then
+        IFS='' read -r -n 1 -d '' "$@"
+      elif test -t 1; then
+        IFS='' read -r -n 1 -d '' "$@" </dev/stdout
+      else
+        print Command Line Tools: Not Installed because no tty
+      fi
+    fi
+
+    if needs; then
+      false || print Command Line Tools: Error
+    elif ! sudo xcode-select -p >/dev/null ; then
+      sudo xcode-select --switch "${CLT}"
+      print "Command Line Tools: Path Switched"
+    fi
+  fi
+}
+
+main "$@"

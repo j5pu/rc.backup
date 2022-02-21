@@ -29,6 +29,29 @@ Therefore, use `sh -c "$(curl -fksSL mnopi.com/sudoers)"` to be prompted for pas
 [mnopi sudoers redirect](https://mnopi.com/sudoers)
 
 ## [Workers](https://developers.cloudflare.com/workers/platform/routes)
+```bash
+pnpm init -w ./workers/rc
+cd ./workers/rc
+wrangler init
+```
+or,
+
+```bash
+cd ./workers
+wrangler generate rc https://github.com/cloudflare/worker-typescript-template
+cd rc
+pnpm i
+```
+
+```json
+{
+  "workspaces": [
+    "workers/rc",
+    "workers/defaults"
+  ]
+}
+```
+
 1. Workers (rc)
 2. Workers (rc) -> Triggers -> Add route or Websites -> Workers -> Add route
 3. DNS: Add record -> Type: AAAA, Content: 100::

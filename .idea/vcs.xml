@@ -14,5 +14,7 @@
     <mapping directory="$PROJECT_DIR$/share/bats-file" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/share/bats-support" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/share/prefsniff" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/workers/rc" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/workers/type" vcs="Git" />
   </component>
 </project>

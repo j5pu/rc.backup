@@ -1,0 +1,34 @@
+{
+  "name": "rc",
+  "description": "## Install  `bash`, `git` and `man` will be installed by the installer in all but Busybox image.",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/j5pu/rc.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/j5pu/rc/issues"
+  },
+  "homepage": "https://github.com/j5pu/rc#readme",
+  "engines": {
+    "node": ">=17.5.0",
+    "pnpm": "^6.11.0"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "workspaces": [
+    "workers/rc",
+    "workers/defaults"
+  ]
+}

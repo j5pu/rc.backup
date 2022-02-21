@@ -97,6 +97,26 @@ EOF
   type install-brew >/dev/null
 }
 
+bin_install_node () {
+  file="${RC_BIN}/install-node"
+  header "${file}"
+  cat >> "${file}" <<'EOF'
+#######################################
+# install node in $NODE_PREFIX
+# Globals:
+#   NODE_PREFIX
+# Arguments:
+#   prefix    installation prefix (default: $NODE_PREFIX
+#######################################
+main () {
+  curl -sfLS https://install-node.vercel.app | sudo sh -s -- --prefix="${1:-${NODE_PREFIX}}" --yes
+}
+
+main "$@"
+EOF
+  type install-node >/dev/null
+}
+
 bin_dir_has_files () {
   file="${RC_BIN}/dir-has-files"
   header "${file}"
@@ -305,6 +325,7 @@ file_rc_paths_d () {
 ${HOME:+${HOME}/bin}
 ${HOME:+${HOME}/.local/bin}
 ${PY_PREFIX}/sbin
+${NODE_PREFIX}/sbin
 /sw/sbin
 /opt/sbin
 ${RC_BIN}
@@ -462,12 +483,24 @@ file_rc_profile_d_py_prefix_sh () {
   file="${RC_PROFILE_D}/py_prefix.sh"
   header sh "${file}"
   cat >> "${file}" <<'EOF'
-# Python prefix
+# Python' prefix for self packages
 export PY_PREFIX='/py'
 EOF
   # shellcheck disable=SC1090,SC1091
   . "${file}"
   [ "${PY_PREFIX-}" ] || print "Undefined: \$PY_PREFIX [${file}]"
+}
+
+file_rc_profile_d_node_prefix_sh () {
+  file="${RC_PROFILE_D}/node_prefix.sh"
+  header sh "${file}"
+  cat >> "${file}" <<'EOF'
+# Node prefix
+export NODE_PREFIX='/node'
+EOF
+  # shellcheck disable=SC1090,SC1091
+  . "${file}"
+  [ "${NODE_PREFIX-}" ] || print "Undefined: \$NODE_PREFIX [${file}]"
 }
 
 file_rc_profile_d_sudoc_sh () {
@@ -994,6 +1027,7 @@ run_chroot () {
   bin_dir_has_files  # used by: lib_source_dir_sh
   bin_dir_to_colon  #  used by: file_rc_profile_source
 
+  file_rc_profile_d_node_prefix_sh
   file_rc_profile_d_py_prefix_sh
   file_rc_profile_d_sudoc_sh  # used by: file_rc_profile_d_password_sh
   file_rc_profile_d_password_sh "$@"
@@ -1005,6 +1039,7 @@ run_chroot () {
   bin_dir_is_empty
   bin_install_clt
   bin_install_brew
+  bin_install_node
   bin_software_update
   bin_sudo
 

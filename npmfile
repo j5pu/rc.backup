@@ -1,0 +1,3 @@
+@cloudflare/wrangler
+# https://github.com/danielpigott/cloudflare-cli ~/.cfcli.yml
+cloudflare-cli

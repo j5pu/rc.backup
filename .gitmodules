@@ -1,15 +1,3 @@
-[submodule "bats-assert"]
-	path = share/bats-assert
-	url = https://github.com/bats-core/bats-assert.git
-[submodule "bats-file"]
-	path = share/bats-file
-	url = https://github.com/bats-core/bats-file.git
-[submodule "bats-support"]
-	path = share/bats-support
-	url = https://github.com/bats-core/bats-support.git
-[submodule "bats-core"]
-	path = share/bats-core
-	url = https://github.com/bats-core/bats-core.git
 [submodule "prefsniff"]
 	path = share/prefsniff
 	url = https://github.com/zcutlip/prefsniff.git

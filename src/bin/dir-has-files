@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -eu
+
+#######################################
+# has the directory any files, including hidden
+# Arguments:
+#   directory   path to directory (default: cwd)
+# Returns:
+#   1 if directory does not have files or does not exist
+#######################################
+main () {
+  test -d "${1:-.}" && [ -n "$(find "${1:-.}" -maxdepth 1 -type f)" ]
+}
+
+main "$@"

@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -eu
+
+#######################################
+# parse directory
+# Arguments:
+#  directory    compat directory which has files with literal paths or variables which will be 'eval'
+#######################################
+parse () {
+  awk 'NF { print $0 }' "${1}"/* | while read -r i; do
+    i="$(eval echo "$i")"
+    ! test -d "${i}" || printf '%s:' "${i}"
+  done
+}
+
+#######################################
+# creates a colon output with all lines in compat directory, lines could be literal or shell variables withouth quotes
+# Arguments:
+#  directory    compat directory which has files with literal paths or variables which will be 'eval' (default: cwd)
+#######################################
+main () {
+  if dir-has-files "${1:-.}"; then
+    rv="$(parse "${1:-.}")"
+    [ "${rv-}" ] && printf '%s' "${rv%?}"
+  else
+    false
+  fi
+}
+
+main "$@"
