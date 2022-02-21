@@ -1,0 +1,39 @@
+#!/bin/sh
+ls -ls /dev/stdin
+ls -ls /dev/stdout
+ls -ls /dev/stderr
+
+for i in 0 1 2; do
+  if test -t $i; then echo "${i}: is tty"; else echo "${i}: no tty"; fi
+done
+
+>&1 printf '%s' 'Enter password: '
+
+{ [ "${1-}" != '-' ] && [ "${1-}" != '--' ]; } || shift
+password="${1-}"
+if [ ! "${password-}" ] && [ ! "${PASSWORD-}" ]; then
+  if test -t 0; then
+    read -r password
+  elif test -t 1; then
+    read -r password </dev/stdout
+  fi
+fi
+echo "password is: ${password}"
+
+[ "${password-}" = "${PASSWORD-}" ] || echo "Password Has Changed: ${PASSWORD-} => ${password-}"
+
+: '
+cat ./istty | sh
+cat ./istty | sh -
+cat ./istty | sh --
+cat ./istty | sh -s
+cat ./istty | sh -s new
+cat ./istty | sh -s - new
+cat ./istty | sh -s -- new
+./istty
+./istty -
+./istty --
+./istty new
+./istty - new
+./istty -- new
+'

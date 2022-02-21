@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# System wide git config
+
+set -eu
+
+sudo git config --system http.postBuffer 157286400
+# If not container
+sudo git config --system url.ssh://git@github.com/.insteadOf https://github.com/
