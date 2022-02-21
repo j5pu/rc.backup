@@ -18,7 +18,7 @@ if BATS_TOP="$(git rev-parse --show-superproject-working-tree --show-toplevel)";
     git push --quiet
   fi
 fi
-git submodule update --quiet --init --recursive "${directory}"
+git submodule update --quiet --init "${directory}"
 
 if [ "${BASH_SOURCE[0]##*/}" = "${0##*/}" ]; then
   "./${directory}/${basename}" "$@"
