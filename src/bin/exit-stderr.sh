@@ -2,9 +2,8 @@
 
 set -eu
 
-# XTRACE
+# TODO: Aqui lo deo la variable de si es BAT local o remoto y seguir con el puto bat.
 
-# TODO: use lsof to see the file or if linux bla bla
 if test -t 2; then
   EXIT_STDERR="$(mktemp)"
   exec 4>&2 2>"${EXIT_STDERR}"

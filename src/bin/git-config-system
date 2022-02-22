@@ -10,8 +10,16 @@ branch='main'
 remote='origin'
 template='/etc/git/template'; sudo mkdir -p "${template}"
 
-default () {
+aliases () {
   # shellcheck disable=SC2034
+  file='--system'
+  update alias.toplevel 'rev-parse --show-toplevel'
+  update alias.supertop 'rev-parse --show-superproject-working-tree'
+  update alias.super-and-top 'rev-parse --show-superproject-working-tree --show-toplevel' # If not init submodule
+  update alias.super '! : rev-parse; git super-and-top | head -1'
+}
+
+default () {
   file='--system'
   update advice.addIgnoredFile false
 
@@ -71,5 +79,6 @@ update () {
 main() {
   default
   template
+  aliases
 }
 main "$@"
