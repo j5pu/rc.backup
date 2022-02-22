@@ -1,9 +1,75 @@
 #!/bin/sh
 
+#
 # System wide git config
+. exit-stderr.sh
+. print.sh
 
-set -eu
+branch='main'
 
-sudo git config --system http.postBuffer 157286400
-# If not container
-sudo git config --system url.ssh://git@github.com/.insteadOf https://github.com/
+remote='origin'
+template='/etc/git/template'; sudo mkdir -p "${template}"
+
+default () {
+  # shellcheck disable=SC2034
+  file='--system'
+  update advice.addIgnoredFile false
+
+  update color.ui true
+
+  update core.autocrlf input
+  update core.editor vi
+  update core.filemode true
+  update core.sshCommand /usr/bin/ssh
+
+  update fetch.prune true
+
+  update git-extras.default-branch "${branch}"
+
+  update help.autocorrect 0
+
+  update http.postBuffer 157286400
+
+  update init.defaultBranch "${branch}"
+  update init.templateDir "${template}"
+
+  update pull.rebase false
+
+  update receive.denyNonFastForwards true
+  update receive.fsckObjects true
+
+  update tag.sort creatordate
+
+  update user.name root
+  update user.email root@example.com
+  update user.username root
+
+  # TODO: change for not container?
+  update url.ssh://git@github.com/.insteadOf https://github.com/
+}
+
+template () {
+  file="--file=${template}/config"
+  update "branch.${branch}.remote" "${remote}"
+  update "branch.${branch}.merge" "refs/heads/${branch}"
+  update core.bare false
+  update core.filemode true
+  update core.ignorecase true
+  update core.logallrefupdates true
+  update core.precomposeunicode true
+  update core.repositoryformatversion 0
+}
+
+update () {
+  command="sudo git config ${file} $1"
+  previous="$(${command} || true)"
+  if [ "${previous}" != "$2" ]; then
+    sudo git config "${file}" "$1" "$2" && print Git Config: "$1": "${previous}" "=>" "$2"
+  fi
+}
+
+main() {
+  default
+  template
+}
+main "$@"

@@ -13,7 +13,7 @@ print() (
   warn='--warning'
   [ "$1" != "${warn}" ] || { rc="${warn}"; shift; }
   case $rc in
-    "${warn}") printf '\e[32m%s' ！;;
+    "${warn}") printf '\e[33m%s' ！;;
     0) printf '\e[32m%s' ✔ ;;
     *)
       printf '\e[31m%s' ✘

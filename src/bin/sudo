@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eu
+
 #######################################
 # sudo wrapper when no sudo is installed
 # Globals:
@@ -8,14 +10,15 @@
 #   sudo arguments
 #######################################
 main () {
-if [ "${SUDOC}" ] && [ "${1-}" = '-S' ] && [ "${PASSWORD-}" ]; then
-  echo "${PASSWORD}" | exec "${SUDOC}" "$@"
-elif [ "${SUDOC}" ]; then
-  exec "${SUDOC}" "$@"
-else
-  case "${1-}" in -K|-S) shift ;; esac
-  "$@"
-fi
+  SUDOC="${SUDOC:-/usr/bin/sudo}"
+  if [ "${SUDOC}" ] && [ "${1-}" = '-S' ] && [ "${PASSWORD-}" ]; then
+    echo "${PASSWORD}" | exec "${SUDOC}" "$@"
+  elif [ "${SUDOC}" ]; then
+    exec "${SUDOC}" "$@"
+  else
+    case "${1-}" in -K|-S) shift ;; esac
+    "$@"
+  fi
 }
 
 main "$@"

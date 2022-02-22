@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="test-env.sh (EnvFile)" type="BashProRunConfiguration">
-    <option name="scriptPath" value="$PROJECT_DIR$/test-env.sh" />
+  <configuration default="false" name="sudo" type="BashProRunConfiguration" singleton="false">
+    <option name="scriptPath" value="$PROJECT_DIR$/src/bin/sudo" />
     <EXTENSION ID="net.ashald.envfile">
       <option name="IS_ENABLED" value="true" />
       <option name="IS_SUBST" value="true" />

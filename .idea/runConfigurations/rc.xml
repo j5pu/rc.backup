@@ -1,8 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="rc (TEST)" type="BashProRunConfiguration">
-    <envs>
-      <env name="RC_TEST" value="./tmp" />
-    </envs>
+  <configuration default="false" name="rc" type="BashProRunConfiguration">
     <option name="scriptPath" value="$PROJECT_DIR$/bin/rc" />
     <EXTENSION ID="net.ashald.envfile">
       <option name="IS_ENABLED" value="true" />
