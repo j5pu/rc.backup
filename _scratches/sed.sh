@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# https://linuxize.com/post/regular-expressions-in-grep/
 tmp="$(mktemp)"
 # https://www.regular-expressions.info/refquick.html
 cat > "${tmp}" <<EOF

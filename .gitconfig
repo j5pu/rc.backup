@@ -1,0 +1,500 @@
+[alias]
+  # git ls-remote --symref origin HEAD https://github.com/bats-core/bats-core | awk -F '[/\t]' '/^ref: refs/ { print $3 }'
+
+  # Add: if needed.
+  a-help = ! echo 'Add: if needed. \
+    \nReturns: \
+    \n  128: no git repository.'
+  a = ! git is && ( git needs-a || git add . --all )
+
+  # Add/Commit/Push: if any needed.
+  all-help = ! echo 'Add/Commit/Push: if any needed. \
+    \nArgs: \
+    \n  $1: message (default: `git diff --name-status -r`). \
+    \n  $2: branch (default: current). \
+    \n  $3: remote (default: origin).'
+  all = "!f() { git a && git c \"${1}\" && git p \"${2}\" \"${3}\"; }; f"
+
+  # Branch: create new branch, checkout and set upstream.
+  branch-new-help = ! echo 'Branch: create new branch, checkout and set upstream. \
+    \nArgs: \
+    \n  $1: branch name.'
+  branch-new = "!f() { git checkout -b \"${1}\" && ; git p-head }; f"
+
+  # Branch: local branches.
+  branches-help = ! echo "Branch: local branches."
+  branches = branch --format='%(refname:short)'
+
+  # Commit: if needed.
+  c-help = ! echo 'Commit: if needed. \
+    \nArgs: \
+    \n  $1: message (default: `git diff --name-status -r`). \
+    \nReturns: \
+    \n  128: no git repository.'
+  c = "!f() { git is && ( git needs-c || { m=\"$( git m 2>/dev/null )\"; m=\"${m:-auto commit}\"; \
+    git commit --quiet -a -m \"${1:-${m}}\"; }; ); }; f"
+
+  # Commit: first commit if needed.
+  c-first-help = ! echo 'Commit: first commit if needed. \
+    \nReturns: \
+    \n  128: no git repository.'
+  c-first = "! git p-head && git a && git c 'first commit' && git tag 0.0.0 && git p"
+
+  # Checkout: cd to repo name and git checkout to remote default branch.
+  checkout-default-help = ! echo 'Checkout: cd to repo name, fetch all and checkout to remote default branch. \
+    \nArgs: \
+    \n  $1: name or owner/name or url. \
+    \nReturns: \
+    \n  1:  directory not found.'
+  checkout-default = "!f() { [[ ! \"${1:-}\" ]] || \
+    { cd \"$( basename \"${1}\" | sed 's/.git//' )\" 2>/dev/null || return 1; }  \
+    && git f && git checkout \"$( git remote-branch-default )\" &>/dev/null;  }; f"
+
+  # Clone: for org.
+  clone-org-help = ! echo 'Clone: for `org`. \
+    \nArgs: \
+    \n  $1: name. \
+    \n  $2: directory (default: cwd). \
+    \nReturns: \
+    \n  128: destination path already exists and is not an empty directory.'
+  clone-org = "!f() { git clone --quiet \"$( git ssh-org \"${1}\" )\" ${2} 2>/dev/null \
+    && git checkout-default \"${1}\"; }; f"
+
+  # Clone: for user.
+  clone-user-help = ! echo 'Clone: for `user`. \
+    \nArgs: \
+    \n  $1: name. \
+    \n  $2: directory (default: cwd). \
+    \nReturns: \
+    \n  128: destination path already exists and is not an empty directory.'
+  clone-user = "!f() { git clone --quiet \"$( git ssh-user \"${1}\" )\" ${2} 2>/dev/null \
+    && git checkout-default \"${1}\"; }; f"
+
+  # Clone: for owner/name.
+  clone-other-help = ! echo 'Clone: for `owner/name`. \
+    \nArgs: \
+    \n  $1: owner/name. \
+    \n  $2: directory (default: cwd). \
+    \nReturns: \
+    \n  128: destination path already exists and is not an empty directory.'
+  clone-other = "!f() { git clone --quiet \"$( git ssh\"${1}\" )\" ${2} 2>/dev/null \
+    && git checkout-default \"${1}\"; }; f"
+
+  # Config: alias in `config --global` or `gitconfig` in `PATH`?.
+  config-global-help = ! echo 'Config: alias in `config --global` or `gitconfig` in `PATH`?. \
+    \nReturns: \
+    \n  1 or 2: no `--global`.'
+  config-global = ! grep -q config-system "${GIT_CONFIG_GLOBAL}" "${GIT_CONFIG_GLOBAL}/git/config" \
+    "${HOME}/.config/git/config" "${HOME}/.gitconfig" 2>/dev/null || which -s gitconfig
+
+  # Config: path if alias in `config --global` or `gitconfig` in `PATH`?.
+  config-global-path-help = ! echo 'Config: path if alias in `config --global` or `gitconfig` in `PATH`?. \
+    \nReturns: \
+    \n  1 or 2: no `--global`.'
+  config-global-path = ! grep -l config-system "${GIT_CONFIG_GLOBAL}" "${GIT_CONFIG_GLOBAL}/git/config" \
+    "${HOME}/.config/git/config" "${HOME}/.gitconfig" 2>/dev/null || which gitconfig
+
+  # Config: path for --system or --global if alias in config, check first system.
+  config-path-help = ! echo 'Config: path for `--global` or `--system` if alias found or `gitconfig` in `PATH`. \
+    \nReturns: \
+    \n  1 or 2: gitconfig not found.'
+  config-path = ! git config-system-path || git config-global-path
+
+  # Config: `--global` or `--system` if alias found (global checked first).
+  config-scope-help = ! echo 'Config: `--global` or `--system` if alias found or `gitconfig` in `PATH`. \
+    \nReturns: \
+    \n  1 or 2: gitconfig not found.'
+  config-scope = "! if git config-system >/dev/null; then echo --system; elif git config-global >/dev/null; \
+    then echo --global; fi"
+
+  # Config: alias in `config --system`?.
+  config-system-help = ! echo 'Config: alias in `config --system`?. \
+    \nReturns: \
+    \n  2: no `--system`.'
+  config-system = ! grep -q config-system "${GIT_CONFIG_SYSTEM}" /etc/gitconfig /usr/local/etc/gitconfig 2>/dev/null
+
+  # Config: path if alias in `config --system`?.
+  config-system-path-help = ! echo 'Config: path if alias in `config --system`?. \
+    \nReturns: \
+    \n  2: no `--system`.'
+  config-system-path = ! grep -l config-system "${GIT_CONFIG_SYSTEM}" /etc/gitconfig /usr/local/etc/gitconfig \
+    2>/dev/null
+
+  # Clone or pull: owner/name (pull if exists and repository is clean).
+  cp-other-help = ! echo 'Clone or pull: owner/name (pull if exists and repository is clean). \
+    \nArgs: \
+    \n  $1: owner/name. \
+    \n  $2: directory (default: cwd). \
+    \nReturns: \
+    \n  1:   dirty. \
+    \n  128: destination path already exists and is not an empty directory.'
+  cp-other = "!f() { git clone-other \"${1}\" ${2} || \
+    ( cd \"$( basename \"${1}\" | sed 's/.git//' 2>/dev/null )\" && git needs && git pull-current );  }; f"
+
+  # Clone or pull: name for org (pull if exists and repository is clean).
+  cp-org-help = ! echo 'Clone or pull: name for org (pull if exists and repository is clean). \
+    \nArgs: \
+    \n  $1: name. \
+    \n  $2: directory (default: cwd). \
+    \nReturns: \
+    \n  1:   dirty. \
+    \n  128: destination path already exists and is not an empty directory.'
+  cp-org = "!f() { git clone-org \"${1}\" ${2} || \
+    ( cd \"$( basename \"${1}\" | sed 's/.git//' 2>/dev/null )\" && git needs && git pull-current );  }; f"
+
+  # Clone or pull: name for user (pull if exists and repository is clean).
+  cp-user-help = ! echo 'Clone or pull: name for user (pull if exists and repository is clean). \
+    \nArgs: \
+    \n  $1: name. \
+    \n  $2: directory (default: cwd). \
+    \nReturns: \
+    \n  1:   dirty. \
+    \n  128: destination path already exists and is not an empty directory.'
+  cp-user = "!f() { ! git clone-user \"${1}\" ${2} || \
+    ( cd \"$( basename \"${1}\" | sed 's/.git//' 2>/dev/null )\" && git needs && git pull-current );  }; f"
+
+  # Branch: current local.
+  current-help = ! echo 'Branch: current local. \
+    \nReturns: \
+    \n  128: no git repository.'
+  current = ! git branch --show-current 2>/dev/null
+
+  # Fetch: all remotes branches not in origin.
+  f-help = ! echo 'Fetch: all remotes branches not in origin. \
+    \nReturns: \
+    \n  128: no git repository.'
+  f = ! git fetch --all --quiet 2>/dev/null
+
+  # Fetch: all remotes branches and remove any remote-tracking references that no longer exist on the remote.
+  f-prune-help = ! echo \
+    'Fetch: all remotes branches and remove any remote-tracking references that no longer exist on the remote. \
+    \nReturns: \
+    \n  128: no git repository.'
+  f-prune = ! git fetch --all --prune --quiet 2>/dev/null
+
+  # GitHub: user ID.
+  id-help = ! echo "GitHub: user ID."
+  id = ! git config user.email | cut -d '+' -f1
+
+  # Rev-parse: is git repository?.
+  is-help = ! echo 'Rev-parse: is git repository?. \
+    \nArgs: \
+    \n  $1: file or directory, file parent if file will be used (default: cwd). \
+    \nReturns: \
+    \n  1:   $1 is not file/dir. \
+    \n  128: no git repository.'
+  is = "!f() { git top \"${1}\" &>/dev/null; }; f"
+
+  # Tag: latest local tag, most recent last (sort = taggerdate).
+  latest-help = ! echo 'Tag: latest local tag, most recent last (sort = taggerdate). \
+    \nReturns: \
+    \n  1:   no tags. \
+    \n  128: no git repository.'
+  latest = ! rv=\"$( git tags 2>/dev/null )\" && echo \"${rv}\" | tail -1
+
+  # Commit message: `git diff --name-status -r`.
+  m-help = ! echo 'Commit message: `git diff --name-status -r`.'
+  m = diff --name-status -r
+
+  # Add/commit/push: are/is needed?.
+  needs-help = ! echo 'Add/commit/push: are/is needed?. \
+    \nReturns: \
+    \n  1: Add/commit/push: are/is needed.'
+  needs = ! git needs-a && git needs-c && git needs-p
+
+  # Add: is needed?.
+  needs-a-help = ! echo 'Add: is needed?. \
+    \nReturns: \
+    \n  1:   `git add` is needed. \
+    \n  128: no git repository.'
+  needs-a = ! git is && test -z \"$( git ls-files --others --exclude-standard )\"
+
+  # Commit: is needed?.
+  needs-c-help = ! echo 'Commit: is needed?. \
+    \nReturns: \
+    \n  1:   `git commit`: is needed. \
+    \n  128: no git repository.'
+  needs-c = ! git is && test -z \"$( git status --porcelain )\"
+
+  # Push: is needed?.
+  needs-p-help = ! echo 'Push: is needed?. \
+    \nArgs: \
+    \n  $1: branch (default: current). \
+    \n  $2: remote (default: origin). \
+    \nReturns: \
+    \n  1:   `git commit` is needed. \
+    \n  128: no git repository.'
+  needs-p = "!f() { git is && git push --tags --dry-run ${2:-origin} ${1:-$( git current )} 2>&1 | \
+      grep -q 'Everything up-to-date'; }; f"
+
+  # Repo: `gh repo create --template template --private` for org.
+  new-org-help = ! echo 'Repo: `gh repo create --template template --private` for `org`. \
+    \nArgs: \
+    \n  $1: name. \
+    \n  $2: description. \
+    \n  $3: additional arguments for `gh repo create`.'
+   new-org = "!f() { gh repo create --template template --confirm --private --description \"${2}\" \
+    \"$( git ssh-org \"${1}\" )\" ${3} && cd \"${1}\" && git c-first; }; f"
+
+  # 'Repo: `gh repo create --template template` for user.
+  new-user-help = ! echo 'Repo: `gh repo create --template template` for `user`. \
+    \nArgs: \
+    \n  $1: name. \
+    \n  $2: private or description (default: public if $1 not `private`). \
+    \n  $3: description or additional arguments for `gh repo create` ($3 description if $2 is `private`). \
+    \n  $4: additional arguments for `gh repo create`.'
+  new-user = "!f() { gh repo create --template template --confirm \
+    --$( [[ \"${2}\" == 'private' ]] && echo ${2} || { desc=\"${2}\"; other=\"${3}\"; echo public; } ) \
+    --description \"${desc:-${3}}\" \"$( git ssh-user \"${1}\" )\" ${other:-${4}}  && cd \"${1}\" && git c-first; }; f"
+
+  # TODO: git new-user btrap 'System boostrap: macOS and Linux'
+  # TODO: git new-user btrap.macos 'System boostrap: macOS'
+  # TODO: git new-user btrap.linux 'System boostrap: Linux'
+
+  # GitHub: organization name.
+  org-help = ! echo "GitHub: organization name."
+  org = ! echo lumenbiomics
+
+  # GitHub: organization ID.
+  org-id-help = ! echo "GitHub: organization ID."
+  org-id = ! echo 4379404
+
+  # Push and Pull: if push is needed.
+  p-help = ! echo 'Push and Pull: if push is needed. \
+    \nArgs: \
+    \n  $1: branch (default: current). \
+    \n  $2: remote (default: origin). \
+    \nReturns: \
+    \n  128: no git repository.'
+  p = "!f() { : git push; git is && ( git needs-p $1 $2 || \
+    { git push --quiet --tags ${2:-origin} ${1:-$( git current )} && git pull-current $2 $1; }; ); }; f"
+
+  # Push: set origin upstream with same branch name
+  p-head-help = ! echo 'Push: set origin upstream with same branch name (HEAD).\
+    \nReturns: \
+    \n  128: no git repository.'
+  p-head = ! git push --quiet -u origin HEAD 2>/dev/null
+
+  # GitHub: is public repo?.
+  public-help = ! echo 'GitHub: is public repo?. \
+    \nArgs: \
+    \n  $1: owner (default: owner from config remote-url). \
+    \n  $2: repo (default: name from config remote-url).'
+  public = "!f() { local GITHUB_TOKEN=; git remote-is-url \
+    https://:@github.com/${1:-$( git remote-repo-owner )}/${2:-$( git remote-repo-name )} 2>/dev/null; }; f"
+
+  # Pull: branch or current branch.
+  pull-current-help = ! echo 'Pull: branch or current branch. \
+    \nArgs: \
+    \n  $1: branch (default: current). \
+    \n  $2: remote (default: origin).'
+  pull-current = "!f() { : git pull; git pull --quiet --no-stat ${2:-origin} ${1:-$( git current )}; }; f"
+
+  # Pull: branch or remote default branch.
+  pull-default-help = ! echo 'Pull: branch or remote default branch. \
+    \nArgs: \
+    \n  $1: branch (default: default remote branch). \
+    \n  $2: remote (default: origin).'
+  pull-default = "!f() { : git pull; git pull --quiet --no-stat ${2:-origin} ${1:-$( git remote-branch-default )}; }; f"
+
+  # Remote: add url.
+  remote-add-url-help = ! echo 'Remote: add url. \
+    \nArgs: \
+    \n  $1: url. \
+    \n  $2: remote (default: origin).'
+  remote-add-url = "!f() { : git remote; git remote add \"${2:-origin}\" \"${1}\"; }; f"
+
+  # Remote: branches, i.e.: origin/main.
+  remote-branch-help = ! echo 'Remote: branches. \
+    \nOutput: \
+    \n  origin/main'
+  remote-branch = branch --remotes --format='%(refname:short)'
+
+  # Remote: default upstream/remote branch.
+  # "$( basename "$(git symbolic-ref --short refs/remotes/origin/HEAD )" )"
+  remote-branch-default-help = ! echo 'Remote: default upstream/remote branch. \
+    \nArgs: \
+    \n  $1: remote (default: origin).'
+  remote-branch-default = "!f() { : git remote; git remote show \"${1:-origin}\" | \
+    grep 'HEAD branch' | cut -d ' ' -f5; }; f"
+
+  # Remote: is valid/has access to git url.
+  remote-is-url-help = ! echo 'Remote: is valid/has access to git url. \
+    \nArgs: \
+    \n  $1: url.'
+  remote-is-url = "!f() { : git ls-remote; git ls-remote \"${1}\" CHECK_GIT_REMOTE_URL_REACHABILITY \
+    2>/dev/null; }; f"
+
+  # Remote: is public repo?.
+  remote-public-help = ! echo 'Remote: is public repo?. \
+    \nArgs: \
+    \n  $1: owner (default: owner from config remote-url). \
+    \n  $2: repo (default: name from config remote-url).'
+  remote-public = "!f() { local GITHUB_TOKEN=; git remote-is-url \
+    https://:@github.com/${1:-$( git remote-repo-owner )}/${2:-$( git remote-repo-name )} 2>/dev/null; }; f"
+
+  # Remote: upstream refs, i.e.: refs/remotes/origin/main.
+  remote-refs-upstream-help = ! echo 'Remote: upstream refs. \
+    \nOutput: \
+    \n  refs/remotes/origin/main'
+  remote-refs-upstream = rev-parse --symbolic-full-name @{upstream}
+
+  # Remote: push refs, i.e.: refs/remotes/origin/main.
+  remote-refs-push-help = ! echo 'Remote: push refs. \
+    \nOutput: \
+    \n  refs/remotes/origin/main'
+  remote-refs-push = rev-parse --symbolic-full-name @{push}
+
+  # Remote: repo name from config remote url.
+  remote-repo-name-help = ! echo 'Remote: repo name from config remote url.'
+  remote-repo-name = ! basename $( git remote-url 2>/dev/null | sed 's/.git$//' ) 2>/dev/null
+
+  # Remote: repo owner/name from config remote url.
+  remote-repo-owner-name-help = ! echo 'Remote: repo owner/name from config remote url.'
+  remote-repo-owner-name = ! o=$( git remote-repo-owner 2>/dev/null ) && n=$( git remote-repo-name 2>/dev/null ) \
+    && echo \"${o}/${n}\"
+
+  # Remote: repo owner from config remote url.
+  remote-repo-owner-help = ! echo 'Remote: repo owner from config remote url.'
+  remote-repo-owner = "!f() { if ! i=$( git remote-url 2>/dev/null ); then if ! i=$( git top 2>/dev/null ); \
+    then return 1; fi; fi; basename $( dirname \"${i}\" | sed 's|:|/|g' ); }; f"
+  owner = remote-repo-owner
+
+  # Remote: config URL.
+  remote-url-help = ! echo 'Remote: config URL. \
+    \nArgs: \
+    \n  $1: remote name (default: origin).'
+  remote-url = "!f() { : git config; git config --get remote.${1:-origin}.url; }; f"
+
+  # Remote: remote names.
+  remotes-help = ! echo 'Remote: remote names. \
+    \nReturns: \
+    \n  1:   no remotes. \
+    \n  128: no git repository.'
+  remotes = ! test -n \"$( git remote 2>/dev/null )\"
+
+  # Repo: repository name from config remote url or path name.
+  repo-name-help = ! echo "Repo: repository name from config remote url or path name."
+  repo-name = ! git remote-repo-name || basename $( git top 2>/dev/null ) 2>/dev/null
+  
+  name = repo-name
+
+  # TODO: ESTABA CON EL RUN Y EL --NAME PERO ME Faltaba El path del project directory
+  # Run: run git command in path.
+  run-help = ! echo 'Run: run git command in path or path from project. \
+    \nOptions (first one will be used if both specified): \
+    \n  --path=[file|directory] file parent if file will be used (default: cwd). \
+    \n  --project=[project name from gitconfig] (default: cwd). \
+    \nArgs: \
+    \n  $@: args to pass to git command. \
+    \nReturns: \
+    \n  1:   --path is not file/dir. \
+    \n  2:   --name is not a valid project in gitconfig. \
+    \n  128: no git repository.'
+  run = "!f() { for i; case \"${i}\" in \
+    --path=*) path=\"${i#--path=}\"; i=2; break;; \
+    --name=*) path=\"$( )\"; i=2; break;; \
+    esac; done; args=( "${@:${i:-1}}" )}; f"
+
+  # GitHub: ssh url for repo name and owner or project in gitconfig.
+  ssh-help = ! echo 'GitHub: ssh url for repo name and owner or project in gitconfig. \
+    \nExamples: \
+    \n  $ git ssh cpython python \
+    \n  $ git ssh python/cpython \
+    \n  $ git ssh cpython \
+    \n  $ git ssh j5p.env \
+    \n  $ git ssh j5pux/j5p.env \
+    \n  $ git ssh j5p.env j5pux \
+    \n  $ git ssh pen \
+    \n  $ git ssh pen lumenbiomics\
+    \n  $ git ssh lumenbiomics/pen \
+    \nArgs: \
+    \n  $1: [name|owner/name]. (default: `git remote-repo-owner-name`)\
+    \n  $2: [owner]. \
+    \nWarning: \
+    \n  $ git ssh cpython \
+    \n  Warning: project=cpython not in gitconfig using owner=j5pux. \
+    \n  git@github.com:j5pux/cpython.git \
+    \nReturns: \
+    \n  1:    no $1. \
+    \n  128:  no $1 and no git repository.'
+  ssh = "!ssh() { [[ ${1:-} ]] || return 1; \
+    if [[ ${2:-} ]]; then \
+      name=${1}; owner=${2}; \
+    else name=${1##*/}; owner=$( [[ ${1} =~ / ]] && echo ${1%/*} ); fi; \
+    if [[ ! ${owner:-} ]]; then \
+      if ! owner=$( git project-owner ${name} ); then \
+        { owner=$( git user ); >&2 echo \
+        \"$( tput setaf 3 )Warning$( tput sgr0 ): project=${name} not in gitconfig using owner=${owner}.\"; }; fi; fi; \
+    echo $( [[ ${owner} == $( git org ) ]] && echo org-$( git org-id ) || echo git )@github.com:${owner}/${name}.git; \
+    }; ssh"
+
+  # GitHub: ssh url for org repo name.
+  ssh-org-help = ! echo 'GitHub: ssh url for `org` repo name. \
+    \nArgs: \
+    \n  $1: name.'
+  ssh-org = "!f() { git ssh \"$( git org )/${1}\"; }; f"
+
+  # GitHub: ssh url for user repo name.
+  ssh-user-help = ! echo 'GitHub: ssh url for `user` repo name. \
+    \nArgs: \
+    \n  $1: name.'
+  ssh-user = "!f() { git ssh \"$( git user )/${1}\"; }; f"
+
+  # Tag: local tags, most recent last (sort = taggerdate).
+  tags-help = ! echo 'Tag: local tags, most recent last (sort = taggerdate). \
+    \nReturns: \
+    \n  1:   no tags. \
+    \n  128: no git repository.'
+  tags = ! rv=\"$( git tag 2>/dev/null )\" && test -n \"${rv}\" && echo \"${rv}\"
+
+  # TODO: meterlo en secret del repositorio y sacarlo de secrets del repo si se puede .......................................
+  # GitHub: token.
+  token-help = ! echo 'GitHub: token.'
+  token = ! echo \"${GITHUB_TOKEN}\"
+
+  # Rev-parse: top level path.
+  top-help = ! echo 'Rev-parse: top level path. \
+    \nArgs: \
+    \n  $1: file or directory, file parent if file will be used (default: cwd). \
+    \nReturns: \
+    \n  1:   $1 is not file/dir. \
+    \n  128: no git repository.'
+  top = "!f() { if test -f \"${1}\"; then path=\"${1%/*}\"; elif test -d \"${1}\"; then path=\"${1}\"; \
+    elif [[ ! \"${1:-}\" ]]; then path=\"$( pwd )\"; else return 1; fi; \
+    test -f \"${path}\" && path=\"$( pwd )\"; git -C \"${path}\" rev-parse --show-toplevel 2>/dev/null; }; f"
+
+  # Config: username/github login.
+  user-help = ! echo "Config: username/github login."
+  user = config user.username
+
+  # cherry (fetching all first)
+  cherry = "!f() { : git cherry; git fetch-all; git cherry \"${@}\" ; }; f"
+
+  # commit quiet all
+  commit-q-a = commit --quiet -a
+
+  # filenames changed since X commit in path
+  filenames-diff = "!f() { git commit-needs || git commit --quiet -a -m \"${1:-auto commit}\"; }; f"
+
+  ## SUBMODULE
+  # submodule sync all: update and pull.
+  sub = "! : git submodule; git sub-update-all; git sub-pull-all"
+  # submodule add -- url path (relative to top)
+  sub-add = submodule add --quiet --
+  # submodules all in .gitmodules
+  sub-ls-all = config --file .gitmodules --get-regexp path | awk '{ print $2 }'
+  # submodules all in .gitmodules
+  sub-ls-init = submodule foreach --quiet --recursive 'echo $name'
+  # submodules pull all
+  sub-pull-all = submodule --quiet foreach 'git pull-active'
+  # submodule update all
+  sub-update-all = submodule update --init --quiet --recursive
+  # submodule update force
+  sub-update-force = submodule update --force --quiet --
+
+  ls-crypt = "!git -c core.quotePath=false ls-files | git -c core.quotePath=false check-attr --stdin filter \
+    | awk 'BEGIN { FS = \":\" }; /crypt$/{ print $1 }'"
+
+  private = filter-repo --mailmap ~/.mailmap --force
+

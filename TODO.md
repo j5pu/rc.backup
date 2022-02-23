@@ -18,3 +18,5 @@
 * Publicar un paquete de brew, deb y de apk con post-install??
 * curl -sfLS https://install-node.vercel.app | sh -s -- -y
 * hostname en /etc/hosts short y long (hostname)
+* curl -sSfL "https://command-not-found.com/-/api/package/alpine/tput"
+* curl -sSfL "https://command-not-found.com/-/search?q=tput"

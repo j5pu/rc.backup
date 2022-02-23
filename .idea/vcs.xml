@@ -9,11 +9,6 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/bats.bash" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/bats.bash/bats-assert" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/bats.bash/bats-core" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/bats.bash/bats-file" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/bats.bash/bats-support" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/share/prefsniff" vcs="Git" />
   </component>
 </project>

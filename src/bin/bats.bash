@@ -3,25 +3,23 @@
 : "${BASH_SOURCE:?Must Run in BASH}"
 
 basename="${BASH_SOURCE[0]##*/}"
+top="$(git super)"
 
-# GIT Super Project Top Level
-#
-export BATS_TOP
+: "${top:?Must be Run from a GIT Repository}"
 
-if BATS_TOP="$(git rev-parse --show-superproject-working-tree --show-toplevel)"; then
-  cd "$(echo "${BATS_TOP}" | head -1)" || exit
-  if ! git config -f .gitmodules submodule."${basename}".path &>/dev/null; then
-    git submodule add --branch main --quiet --name "${basename}" "https://github.com/j5pu/${basename}.git" "${basename}"
-    git add .gitmodules
-    git commit --quiet -m "submodule: ${basename}"
-    git push --quiet
-  fi
+if ! git -C "${top}" config -f .gitmodules "submodule.${basename}.path" &>/dev/null; then
+  git -C "${top}" submodule add --branch main --quiet --name "${basename}" \
+    "https://github.com/j5pu/${basename}.git" "${basename}"
+  git -C "${top}" add .gitmodules
+  git -C "${top}" commit --quiet -a -m "submodule: ${basename}"
+  git -C "${top}" push --quiet
 fi
-git submodule update --quiet --remote"${basename}"
+
+git -C "${top}" submodule update --quiet --remote "${basename}"
 
 if [ "${BASH_SOURCE[0]##*/}" = "${0##*/}" ]; then
-  "./${basename}/bin/${basename}" "$@"
+  "${top}/${basename}/bin/${basename}" "$@"
 else
-  . "./${basename}/bin/${basename}" "$@"
+  . "${top}/${basename}/bin/${basename}" "$@"
   unset basename
 fi

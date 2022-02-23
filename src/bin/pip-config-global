@@ -1,0 +1,28 @@
+#!/bin/sh
+
+#
+# System wide git config # https://pip.pypa.io/en/stable/topics/configuration/
+
+type pip3 >/dev/null || exit 0
+. exit-stderr.sh
+. print.sh
+
+update() {
+  command="sudo pip3 config --global"
+  previous="$(${command} get "$1" 2>/dev/null || true)"
+  if [ "${previous}" != "$2" ]; then
+    ${command} set "$1" "$2" && print PIP Config: "$1": "${previous}" "=>" "$2"
+  fi
+}
+
+main() {
+  update global.disable-pip-version-check true
+  update global.no-python-version-warning true
+  update global.quiet 1
+  update global.use-feature in-tree-build
+
+  update install.no-warn-script-location true
+  update install.only-binary :all:
+}
+
+main "$@"

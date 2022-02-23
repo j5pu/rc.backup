@@ -28,7 +28,6 @@ export RC_SHARE="${RC}/share"
 
 source_dir "${RC_PROFILE_D}"
 
-
 if i="$(dir-to-colon " ${RC_PATHS_D}")"; then
   export PATH="${i}"
 fi
@@ -50,4 +49,5 @@ if i="$(dir-to-colon "${RC_INFOPATHS_D}")"; then
   export INFOPATH="${i}${INFOPATH:+:${INFOPATH}}"
 fi
 
+. bash4.sh
 source_dir "${RC_D}"
