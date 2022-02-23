@@ -1,3 +1,7 @@
 [submodule "prefsniff"]
 	path = share/prefsniff
 	url = https://github.com/zcutlip/prefsniff.git
+[submodule "bats.bash"]
+	path = bats.bash
+	url = https://github.com/j5pu/bats.bash.git
+	branch = main
