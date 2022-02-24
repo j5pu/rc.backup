@@ -31,7 +31,7 @@ EOF
 # </dl>
 # </html>
 ${f}() { test "\$#" -eq 0 || printf '%b' "\${${co}}"; printf '%b' "\$@"; printf '%b' "\${Reset}"; }
-[ "\${BASH_VERSION-}" ] || export -f ${f}
+[ ! "\${BASH_VERSION-}" ] || export -f ${f}
 
 EOF
 }

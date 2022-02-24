@@ -22,7 +22,7 @@ export Reset='\033[0m'
 # </dl>
 # </html>
 reset() { test "$#" -eq 0 || printf '%b' "${Reset}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f reset
+[ ! "${BASH_VERSION-}" ] || export -f reset
 
 # <html><h2>Black </h2>
 # <p><strong><code>$Black</code></strong> Color Black .</p>
@@ -40,7 +40,7 @@ export Black='\033[30m'
 # </dl>
 # </html>
 black() { test "$#" -eq 0 || printf '%b' "${Black}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f black
+[ ! "${BASH_VERSION-}" ] || export -f black
 
 # <html><h2>Black Bold</h2>
 # <p><strong><code>$BlackBold</code></strong> Color Black Bold.</p>
@@ -58,7 +58,7 @@ export BlackBold='\033[30;1m'
 # </dl>
 # </html>
 blackbold() { test "$#" -eq 0 || printf '%b' "${BlackBold}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f blackbold
+[ ! "${BASH_VERSION-}" ] || export -f blackbold
 
 # <html><h2>Black Dim</h2>
 # <p><strong><code>$BlackDim</code></strong> Color Black Dim.</p>
@@ -76,7 +76,7 @@ export BlackDim='\033[30;2m'
 # </dl>
 # </html>
 blackdim() { test "$#" -eq 0 || printf '%b' "${BlackDim}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f blackdim
+[ ! "${BASH_VERSION-}" ] || export -f blackdim
 
 # <html><h2>Black Under</h2>
 # <p><strong><code>$BlackUnder</code></strong> Color Black Under.</p>
@@ -94,7 +94,7 @@ export BlackUnder='\033[30;4m'
 # </dl>
 # </html>
 blackunder() { test "$#" -eq 0 || printf '%b' "${BlackUnder}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f blackunder
+[ ! "${BASH_VERSION-}" ] || export -f blackunder
 
 # <html><h2>Black Invert</h2>
 # <p><strong><code>$BlackInvert</code></strong> Color Black Invert.</p>
@@ -112,7 +112,7 @@ export BlackInvert='\033[30;7m'
 # </dl>
 # </html>
 blackinvert() { test "$#" -eq 0 || printf '%b' "${BlackInvert}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f blackinvert
+[ ! "${BASH_VERSION-}" ] || export -f blackinvert
 
 # <html><h2>Black Bg</h2>
 # <p><strong><code>$BlackBg</code></strong> Color Black Bg.</p>
@@ -130,7 +130,7 @@ export BlackBg='\033[40m'
 # </dl>
 # </html>
 blackbg() { test "$#" -eq 0 || printf '%b' "${BlackBg}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f blackbg
+[ ! "${BASH_VERSION-}" ] || export -f blackbg
 
 # <html><h2>Red </h2>
 # <p><strong><code>$Red</code></strong> Color Red .</p>
@@ -148,7 +148,7 @@ export Red='\033[31m'
 # </dl>
 # </html>
 red() { test "$#" -eq 0 || printf '%b' "${Red}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f red
+[ ! "${BASH_VERSION-}" ] || export -f red
 
 # <html><h2>Red Bold</h2>
 # <p><strong><code>$RedBold</code></strong> Color Red Bold.</p>
@@ -166,7 +166,7 @@ export RedBold='\033[31;1m'
 # </dl>
 # </html>
 redbold() { test "$#" -eq 0 || printf '%b' "${RedBold}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f redbold
+[ ! "${BASH_VERSION-}" ] || export -f redbold
 
 # <html><h2>Red Dim</h2>
 # <p><strong><code>$RedDim</code></strong> Color Red Dim.</p>
@@ -184,7 +184,7 @@ export RedDim='\033[31;2m'
 # </dl>
 # </html>
 reddim() { test "$#" -eq 0 || printf '%b' "${RedDim}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f reddim
+[ ! "${BASH_VERSION-}" ] || export -f reddim
 
 # <html><h2>Red Under</h2>
 # <p><strong><code>$RedUnder</code></strong> Color Red Under.</p>
@@ -202,7 +202,7 @@ export RedUnder='\033[31;4m'
 # </dl>
 # </html>
 redunder() { test "$#" -eq 0 || printf '%b' "${RedUnder}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f redunder
+[ ! "${BASH_VERSION-}" ] || export -f redunder
 
 # <html><h2>Red Invert</h2>
 # <p><strong><code>$RedInvert</code></strong> Color Red Invert.</p>
@@ -220,7 +220,7 @@ export RedInvert='\033[31;7m'
 # </dl>
 # </html>
 redinvert() { test "$#" -eq 0 || printf '%b' "${RedInvert}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f redinvert
+[ ! "${BASH_VERSION-}" ] || export -f redinvert
 
 # <html><h2>Red Bg</h2>
 # <p><strong><code>$RedBg</code></strong> Color Red Bg.</p>
@@ -238,7 +238,7 @@ export RedBg='\033[41m'
 # </dl>
 # </html>
 redbg() { test "$#" -eq 0 || printf '%b' "${RedBg}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f redbg
+[ ! "${BASH_VERSION-}" ] || export -f redbg
 
 # <html><h2>Green </h2>
 # <p><strong><code>$Green</code></strong> Color Green .</p>
@@ -256,7 +256,7 @@ export Green='\033[32m'
 # </dl>
 # </html>
 green() { test "$#" -eq 0 || printf '%b' "${Green}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f green
+[ ! "${BASH_VERSION-}" ] || export -f green
 
 # <html><h2>Green Bold</h2>
 # <p><strong><code>$GreenBold</code></strong> Color Green Bold.</p>
@@ -274,7 +274,7 @@ export GreenBold='\033[32;1m'
 # </dl>
 # </html>
 greenbold() { test "$#" -eq 0 || printf '%b' "${GreenBold}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greenbold
+[ ! "${BASH_VERSION-}" ] || export -f greenbold
 
 # <html><h2>Green Dim</h2>
 # <p><strong><code>$GreenDim</code></strong> Color Green Dim.</p>
@@ -292,7 +292,7 @@ export GreenDim='\033[32;2m'
 # </dl>
 # </html>
 greendim() { test "$#" -eq 0 || printf '%b' "${GreenDim}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greendim
+[ ! "${BASH_VERSION-}" ] || export -f greendim
 
 # <html><h2>Green Under</h2>
 # <p><strong><code>$GreenUnder</code></strong> Color Green Under.</p>
@@ -310,7 +310,7 @@ export GreenUnder='\033[32;4m'
 # </dl>
 # </html>
 greenunder() { test "$#" -eq 0 || printf '%b' "${GreenUnder}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greenunder
+[ ! "${BASH_VERSION-}" ] || export -f greenunder
 
 # <html><h2>Green Invert</h2>
 # <p><strong><code>$GreenInvert</code></strong> Color Green Invert.</p>
@@ -328,7 +328,7 @@ export GreenInvert='\033[32;7m'
 # </dl>
 # </html>
 greeninvert() { test "$#" -eq 0 || printf '%b' "${GreenInvert}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greeninvert
+[ ! "${BASH_VERSION-}" ] || export -f greeninvert
 
 # <html><h2>Green Bg</h2>
 # <p><strong><code>$GreenBg</code></strong> Color Green Bg.</p>
@@ -346,7 +346,7 @@ export GreenBg='\033[42m'
 # </dl>
 # </html>
 greenbg() { test "$#" -eq 0 || printf '%b' "${GreenBg}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greenbg
+[ ! "${BASH_VERSION-}" ] || export -f greenbg
 
 # <html><h2>Yellow </h2>
 # <p><strong><code>$Yellow</code></strong> Color Yellow .</p>
@@ -364,7 +364,7 @@ export Yellow='\033[33m'
 # </dl>
 # </html>
 yellow() { test "$#" -eq 0 || printf '%b' "${Yellow}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f yellow
+[ ! "${BASH_VERSION-}" ] || export -f yellow
 
 # <html><h2>Yellow Bold</h2>
 # <p><strong><code>$YellowBold</code></strong> Color Yellow Bold.</p>
@@ -382,7 +382,7 @@ export YellowBold='\033[33;1m'
 # </dl>
 # </html>
 yellowbold() { test "$#" -eq 0 || printf '%b' "${YellowBold}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f yellowbold
+[ ! "${BASH_VERSION-}" ] || export -f yellowbold
 
 # <html><h2>Yellow Dim</h2>
 # <p><strong><code>$YellowDim</code></strong> Color Yellow Dim.</p>
@@ -400,7 +400,7 @@ export YellowDim='\033[33;2m'
 # </dl>
 # </html>
 yellowdim() { test "$#" -eq 0 || printf '%b' "${YellowDim}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f yellowdim
+[ ! "${BASH_VERSION-}" ] || export -f yellowdim
 
 # <html><h2>Yellow Under</h2>
 # <p><strong><code>$YellowUnder</code></strong> Color Yellow Under.</p>
@@ -418,7 +418,7 @@ export YellowUnder='\033[33;4m'
 # </dl>
 # </html>
 yellowunder() { test "$#" -eq 0 || printf '%b' "${YellowUnder}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f yellowunder
+[ ! "${BASH_VERSION-}" ] || export -f yellowunder
 
 # <html><h2>Yellow Invert</h2>
 # <p><strong><code>$YellowInvert</code></strong> Color Yellow Invert.</p>
@@ -436,7 +436,7 @@ export YellowInvert='\033[33;7m'
 # </dl>
 # </html>
 yellowinvert() { test "$#" -eq 0 || printf '%b' "${YellowInvert}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f yellowinvert
+[ ! "${BASH_VERSION-}" ] || export -f yellowinvert
 
 # <html><h2>Yellow Bg</h2>
 # <p><strong><code>$YellowBg</code></strong> Color Yellow Bg.</p>
@@ -454,7 +454,7 @@ export YellowBg='\033[43m'
 # </dl>
 # </html>
 yellowbg() { test "$#" -eq 0 || printf '%b' "${YellowBg}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f yellowbg
+[ ! "${BASH_VERSION-}" ] || export -f yellowbg
 
 # <html><h2>Blue </h2>
 # <p><strong><code>$Blue</code></strong> Color Blue .</p>
@@ -472,7 +472,7 @@ export Blue='\033[34m'
 # </dl>
 # </html>
 blue() { test "$#" -eq 0 || printf '%b' "${Blue}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f blue
+[ ! "${BASH_VERSION-}" ] || export -f blue
 
 # <html><h2>Blue Bold</h2>
 # <p><strong><code>$BlueBold</code></strong> Color Blue Bold.</p>
@@ -490,7 +490,7 @@ export BlueBold='\033[34;1m'
 # </dl>
 # </html>
 bluebold() { test "$#" -eq 0 || printf '%b' "${BlueBold}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f bluebold
+[ ! "${BASH_VERSION-}" ] || export -f bluebold
 
 # <html><h2>Blue Dim</h2>
 # <p><strong><code>$BlueDim</code></strong> Color Blue Dim.</p>
@@ -508,7 +508,7 @@ export BlueDim='\033[34;2m'
 # </dl>
 # </html>
 bluedim() { test "$#" -eq 0 || printf '%b' "${BlueDim}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f bluedim
+[ ! "${BASH_VERSION-}" ] || export -f bluedim
 
 # <html><h2>Blue Under</h2>
 # <p><strong><code>$BlueUnder</code></strong> Color Blue Under.</p>
@@ -526,7 +526,7 @@ export BlueUnder='\033[34;4m'
 # </dl>
 # </html>
 blueunder() { test "$#" -eq 0 || printf '%b' "${BlueUnder}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f blueunder
+[ ! "${BASH_VERSION-}" ] || export -f blueunder
 
 # <html><h2>Blue Invert</h2>
 # <p><strong><code>$BlueInvert</code></strong> Color Blue Invert.</p>
@@ -544,7 +544,7 @@ export BlueInvert='\033[34;7m'
 # </dl>
 # </html>
 blueinvert() { test "$#" -eq 0 || printf '%b' "${BlueInvert}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f blueinvert
+[ ! "${BASH_VERSION-}" ] || export -f blueinvert
 
 # <html><h2>Blue Bg</h2>
 # <p><strong><code>$BlueBg</code></strong> Color Blue Bg.</p>
@@ -562,7 +562,7 @@ export BlueBg='\033[44m'
 # </dl>
 # </html>
 bluebg() { test "$#" -eq 0 || printf '%b' "${BlueBg}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f bluebg
+[ ! "${BASH_VERSION-}" ] || export -f bluebg
 
 # <html><h2>Magenta </h2>
 # <p><strong><code>$Magenta</code></strong> Color Magenta .</p>
@@ -580,7 +580,7 @@ export Magenta='\033[35m'
 # </dl>
 # </html>
 magenta() { test "$#" -eq 0 || printf '%b' "${Magenta}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f magenta
+[ ! "${BASH_VERSION-}" ] || export -f magenta
 
 # <html><h2>Magenta Bold</h2>
 # <p><strong><code>$MagentaBold</code></strong> Color Magenta Bold.</p>
@@ -598,7 +598,7 @@ export MagentaBold='\033[35;1m'
 # </dl>
 # </html>
 magentabold() { test "$#" -eq 0 || printf '%b' "${MagentaBold}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f magentabold
+[ ! "${BASH_VERSION-}" ] || export -f magentabold
 
 # <html><h2>Magenta Dim</h2>
 # <p><strong><code>$MagentaDim</code></strong> Color Magenta Dim.</p>
@@ -616,7 +616,7 @@ export MagentaDim='\033[35;2m'
 # </dl>
 # </html>
 magentadim() { test "$#" -eq 0 || printf '%b' "${MagentaDim}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f magentadim
+[ ! "${BASH_VERSION-}" ] || export -f magentadim
 
 # <html><h2>Magenta Under</h2>
 # <p><strong><code>$MagentaUnder</code></strong> Color Magenta Under.</p>
@@ -634,7 +634,7 @@ export MagentaUnder='\033[35;4m'
 # </dl>
 # </html>
 magentaunder() { test "$#" -eq 0 || printf '%b' "${MagentaUnder}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f magentaunder
+[ ! "${BASH_VERSION-}" ] || export -f magentaunder
 
 # <html><h2>Magenta Invert</h2>
 # <p><strong><code>$MagentaInvert</code></strong> Color Magenta Invert.</p>
@@ -652,7 +652,7 @@ export MagentaInvert='\033[35;7m'
 # </dl>
 # </html>
 magentainvert() { test "$#" -eq 0 || printf '%b' "${MagentaInvert}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f magentainvert
+[ ! "${BASH_VERSION-}" ] || export -f magentainvert
 
 # <html><h2>Magenta Bg</h2>
 # <p><strong><code>$MagentaBg</code></strong> Color Magenta Bg.</p>
@@ -670,7 +670,7 @@ export MagentaBg='\033[45m'
 # </dl>
 # </html>
 magentabg() { test "$#" -eq 0 || printf '%b' "${MagentaBg}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f magentabg
+[ ! "${BASH_VERSION-}" ] || export -f magentabg
 
 # <html><h2>Cyan </h2>
 # <p><strong><code>$Cyan</code></strong> Color Cyan .</p>
@@ -688,7 +688,7 @@ export Cyan='\033[36m'
 # </dl>
 # </html>
 cyan() { test "$#" -eq 0 || printf '%b' "${Cyan}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f cyan
+[ ! "${BASH_VERSION-}" ] || export -f cyan
 
 # <html><h2>Cyan Bold</h2>
 # <p><strong><code>$CyanBold</code></strong> Color Cyan Bold.</p>
@@ -706,7 +706,7 @@ export CyanBold='\033[36;1m'
 # </dl>
 # </html>
 cyanbold() { test "$#" -eq 0 || printf '%b' "${CyanBold}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f cyanbold
+[ ! "${BASH_VERSION-}" ] || export -f cyanbold
 
 # <html><h2>Cyan Dim</h2>
 # <p><strong><code>$CyanDim</code></strong> Color Cyan Dim.</p>
@@ -724,7 +724,7 @@ export CyanDim='\033[36;2m'
 # </dl>
 # </html>
 cyandim() { test "$#" -eq 0 || printf '%b' "${CyanDim}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f cyandim
+[ ! "${BASH_VERSION-}" ] || export -f cyandim
 
 # <html><h2>Cyan Under</h2>
 # <p><strong><code>$CyanUnder</code></strong> Color Cyan Under.</p>
@@ -742,7 +742,7 @@ export CyanUnder='\033[36;4m'
 # </dl>
 # </html>
 cyanunder() { test "$#" -eq 0 || printf '%b' "${CyanUnder}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f cyanunder
+[ ! "${BASH_VERSION-}" ] || export -f cyanunder
 
 # <html><h2>Cyan Invert</h2>
 # <p><strong><code>$CyanInvert</code></strong> Color Cyan Invert.</p>
@@ -760,7 +760,7 @@ export CyanInvert='\033[36;7m'
 # </dl>
 # </html>
 cyaninvert() { test "$#" -eq 0 || printf '%b' "${CyanInvert}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f cyaninvert
+[ ! "${BASH_VERSION-}" ] || export -f cyaninvert
 
 # <html><h2>Cyan Bg</h2>
 # <p><strong><code>$CyanBg</code></strong> Color Cyan Bg.</p>
@@ -778,7 +778,7 @@ export CyanBg='\033[46m'
 # </dl>
 # </html>
 cyanbg() { test "$#" -eq 0 || printf '%b' "${CyanBg}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f cyanbg
+[ ! "${BASH_VERSION-}" ] || export -f cyanbg
 
 # <html><h2>Grey </h2>
 # <p><strong><code>$Grey</code></strong> Color Grey .</p>
@@ -796,7 +796,7 @@ export Grey='\033[37m'
 # </dl>
 # </html>
 grey() { test "$#" -eq 0 || printf '%b' "${Grey}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f grey
+[ ! "${BASH_VERSION-}" ] || export -f grey
 
 # <html><h2>Grey Bold</h2>
 # <p><strong><code>$GreyBold</code></strong> Color Grey Bold.</p>
@@ -814,7 +814,7 @@ export GreyBold='\033[37;1m'
 # </dl>
 # </html>
 greybold() { test "$#" -eq 0 || printf '%b' "${GreyBold}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greybold
+[ ! "${BASH_VERSION-}" ] || export -f greybold
 
 # <html><h2>Grey Dim</h2>
 # <p><strong><code>$GreyDim</code></strong> Color Grey Dim.</p>
@@ -832,7 +832,7 @@ export GreyDim='\033[37;2m'
 # </dl>
 # </html>
 greydim() { test "$#" -eq 0 || printf '%b' "${GreyDim}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greydim
+[ ! "${BASH_VERSION-}" ] || export -f greydim
 
 # <html><h2>Grey Under</h2>
 # <p><strong><code>$GreyUnder</code></strong> Color Grey Under.</p>
@@ -850,7 +850,7 @@ export GreyUnder='\033[37;4m'
 # </dl>
 # </html>
 greyunder() { test "$#" -eq 0 || printf '%b' "${GreyUnder}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greyunder
+[ ! "${BASH_VERSION-}" ] || export -f greyunder
 
 # <html><h2>Grey Invert</h2>
 # <p><strong><code>$GreyInvert</code></strong> Color Grey Invert.</p>
@@ -868,7 +868,7 @@ export GreyInvert='\033[37;7m'
 # </dl>
 # </html>
 greyinvert() { test "$#" -eq 0 || printf '%b' "${GreyInvert}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greyinvert
+[ ! "${BASH_VERSION-}" ] || export -f greyinvert
 
 # <html><h2>Grey Bg</h2>
 # <p><strong><code>$GreyBg</code></strong> Color Grey Bg.</p>
@@ -886,7 +886,7 @@ export GreyBg='\033[47m'
 # </dl>
 # </html>
 greybg() { test "$#" -eq 0 || printf '%b' "${GreyBg}"; printf '%b' "$@"; printf '%b' "${Reset}"; }
-[ "${BASH_VERSION-}" ] || export -f greybg
+[ ! "${BASH_VERSION-}" ] || export -f greybg
 
 }
 

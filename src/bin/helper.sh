@@ -20,7 +20,9 @@
 # </html>
 STRICT="${STRICT:-1}"
 if [ "${STRICT-1}" -eq 1 ] && [ ! "${PS1-}" ]; then
-  # Contains the shell opts to be restored with set "-${SETOPTS}"
+  # Contains the shell opts to be restored with 'set "-${SETOPTS-$-}"
+  #
+  # shellcheck disable=SC2034
   SETOPTS="${SETOPTS:-$-}"
   set -eu
   if [ "${BASH_VERSION-}" ]; then
@@ -229,7 +231,7 @@ has() {
     unset rv; unset -f doc
     return 1 2>/dev/null || exit 1
   fi
-  unset all executable path rv value; unset -f doc
+  unset all executable i path rv value; unset -f doc
 }
 
 #######################################
@@ -458,7 +460,7 @@ verbose() {
 # xtrace
 #######################################
 xtrace() {
-  fromman verbose "$@" || exit 0
+  fromman xtrace "$@" || exit 0
   rm -f /tmp/xtrace
   if [ "${BASH_VERSION-}" ] && [ "${XTRACE-0}" -eq 1 ]; then
     # shellcheck disable=SC3023
