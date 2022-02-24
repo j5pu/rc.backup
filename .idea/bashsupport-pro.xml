@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="bashsupport-pro.project">
+    <scriptLibraries>
+      <library name="rc">
+        <sources>
+          <source path="src" recursive="true" />
+        </sources>
+        <targets>
+          <target recursive="true" />
+        </targets>
+      </library>
+    </scriptLibraries>
+  </component>
+</project>

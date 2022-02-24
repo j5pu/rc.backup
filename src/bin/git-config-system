@@ -16,6 +16,7 @@ template='/etc/git/template'; sudo mkdir -p "${template}"
 aliases () {
   # shellcheck disable=SC2034
   file='--system'
+  update alias.basename '! : git rev-parse; git super | grep -m 1 "^.*" | xargs basename'
   update alias.basename-if-file '! if [ -d "${1:-.}" ]; then echo . ; else basename "${1:-.}"; fi #'
   update alias.dirname-if-file '! if [ -d "${1:-.}" ]; then echo "${1:-.}"; else dirname "${1:-.}"; fi #'
   update alias.is '! git top >/dev/null 2>&1 #'
