@@ -11,21 +11,22 @@ update() {
   command="sudo pip3 config --global"
   previous="$(${command} get "$1" 2>/dev/null || true)"
   if [ "${previous}" != "$2" ]; then
-    ${command} set "$1" "$2" && print PIP Config: "$1": "${previous}" "=>" "$2"
+    ${command} set "$1" "$2" >/dev/null && print PIP Config: "$1": "${previous}" "=>" "$2"
   fi
 }
 
 main() {
   for arg; do
     case "${arg}" in
-      --force) sudo rm -rf /Library/Application\ Support/pip/pip.conf /etc/pip/pip.conf
+      --force)
+        sudo rm -rf /Library/Application\ Support/pip/pip.conf /etc/pip/pip.conf
+        print --warning Removed: /Library/Application\ Support/pip/pip.conf /etc/pip/pip.conf
+        ;;
     esac
   done
   update global.disable-pip-version-check true
   update global.no-python-version-warning true
-  update global.quiet 1
   update global.use-feature in-tree-build
-
   update install.no-warn-script-location true
   update install.only-binary :all:
 }

@@ -108,7 +108,10 @@ update () {
 main() {
   for arg; do
     case "${arg}" in
-      --force) sudo rm -rf /etc/gitconfig "${template}"
+      --force)
+        sudo rm -rf /etc/gitconfig "${template}"/*
+        print --warning Removed: /etc/gitconfig "${template}"/*
+        ;;
     esac
   done
   default
