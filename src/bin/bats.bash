@@ -15,7 +15,8 @@ if ! git -C "${top}" config -f .gitmodules "submodule.${basename}.path" &>/dev/n
   git -C "${top}" push --quiet
 fi
 
-git -C "${top}" submodule --quiet update --remote "${basename}" 2>/tmp/.submodule
+git -C "${top}" submodule --quiet update --remote "${basename}" 2>/tmp/.submodule \
+  || { cat /tmp/.submodule; rm /tmp/.submodule; exit 1; }
 
 if [ "${BASH_SOURCE[0]##*/}" = "${0##*/}" ]; then
   "${top}/${basename}/bin/${basename}" "$@"
