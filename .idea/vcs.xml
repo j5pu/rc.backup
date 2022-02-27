@@ -9,6 +9,9 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Downloads/imac/npmrc" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../actions" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/share/makeself" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/share/prefsniff" vcs="Git" />
   </component>
 </project>

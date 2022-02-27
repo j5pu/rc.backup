@@ -1,0 +1,18 @@
+#!/bin/sh
+
+#######################################
+# installs node in $NODE_PREFIX
+# Globals:
+#   NODE_PREFIX
+# Arguments:
+#   [prefix]            installation prefix (default: $NODE_PREFIX)
+#######################################
+main () {
+  . exit-stderr.sh
+  . print.sh
+
+  curl -sfLS https://install-node.vercel.app | sudo sh -s -- --prefix="${1:-${NODE_PREFIX}}" --yes
+  corepack enable "${NODE_COREPACK}"
+}
+
+main "$@"

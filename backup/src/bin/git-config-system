@@ -1,0 +1,121 @@
+#!/bin/sh
+# shellcheck disable=SC2016,SC2034
+
+#
+# System wide git config
+type git >/dev/null || exit 0
+
+#. helper.sh && stderr
+. helper.sh && stderr
+set -x
+branch='main'
+
+remote='origin'
+template='/etc/git/template'; sudo mkdir -p "${template}"
+
+# TODO: test de los alias.
+aliases () {
+  file='--system'
+  update alias.basename '! : git rev-parse; git super | grep -m 1 "^.*" | xargs basename'
+  update alias.basename-if-file '! if [ -d "${1:-.}" ]; then echo . ; else basename "${1:-.}"; fi #'
+  update alias.dirname-if-file '! if [ -d "${1:-.}" ]; then echo "${1:-.}"; else dirname "${1:-.}"; fi #'
+  update alias.is '! git top >/dev/null 2>&1 #'
+  update alias.name '! : git config; git url | xargs -I {} basename {} .git #'
+  update alias.super '! : git rev-parse; git ${1:+-C "$(git dirname-if-file "$1")"} \
+    rev-parse --show-superproject-working-tree --show-toplevel \
+    "$(git basename-if-file "${1-}")" | grep -m 1 "^.*" #'
+  update alias.superproject '! : git rev-parse; git ${1:+-C "$(git dirname-if-file "$1")"} \
+    rev-parse --show-superproject-working-tree \
+    "$(git basename-if-file "${1-}")" | grep -m 1 "^.*" | xargs realpath | grep -m 1 "^.*" #'
+  update alias.top '! : git rev-parse; git ${1:+-C "$(git dirname-if-file "$1")"} \
+    rev-parse --show-toplevel \
+    "$(git basename-if-file "${1-}")" | grep -m 1 "^.*" #'
+  update alias.url 'config --get remote.origin.url'
+}
+
+default () {
+  file='--system'
+  update advice.addIgnoredFile false
+
+  update color.branch auto
+  update color.branch.remote yellow
+  update color.decorate auto
+  update color.diff auto
+  update color.grep auto
+  update color.interactive auto
+  update color.pager true
+  update color.showbranch auto
+  update color.status auto
+  update color.status.added green
+  update color.status.changed 'red bold'
+  update color.status.untracked 'magenta bold'
+  update color.ui true
+
+  update core.autocrlf input
+  update core.editor vi
+  update core.filemode true
+  update core.sshCommand /usr/bin/ssh
+
+  update fetch.prune true
+
+  update git-extras.default-branch "${branch}"
+
+  update help.autocorrect 0
+
+  update http.postBuffer 157286400
+
+  update init.defaultBranch "${branch}"
+  update init.templateDir "${template}"
+
+  update pull.rebase false
+
+  update receive.denyNonFastForwards true
+  update receive.fsckObjects true
+
+  update tag.sort creatordate
+
+  update user.name root
+  update user.email root@example.com
+  update user.username root
+
+  [ "${GITHUB_RUN_ID-}" ] || { [ "${CONTAINER-0}" -eq 1 ] && [ "${TOKEN-}" ]; }\
+    || update url.ssh://git@github.com/.insteadOf https://github.com/
+}
+
+template () {
+  file="--file=${template}/config"
+  update "branch.${branch}.remote" "${remote}"
+  update "branch.${branch}.merge" "refs/heads/${branch}"
+  update core.bare false
+  update core.filemode true
+  update core.ignorecase true
+  update core.logallrefupdates true
+  update core.precomposeunicode true
+  update core.repositoryformatversion 0
+  [ -f  "${template}/HEAD" ] || { echo "ref: refs/heads/${branch}" | sudo tee "${template}/HEAD" >/dev/null \
+    && show Updated: "${template}/HEAD"; }
+}
+
+update () {
+  command="sudo git config ${file} $1"
+  previous="$(${command} || true)"
+  if [ "${previous}" != "$2" ]; then
+    ${command} "$2" && show GIT Config: "$1": "${previous}" "=>" "$2"
+  fi
+}
+
+main() {
+  for arg; do
+    case "${arg}" in
+      --force)
+        sudo rm -rf /etc/gitconfig "${template}"/*
+        show --warning Removed: /etc/gitconfig "${template}"/*
+        ;;
+    esac
+  done
+  default
+  template
+  aliases
+}
+
+main "$@"

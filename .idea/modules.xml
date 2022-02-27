@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../actions/.idea/actions.iml" filepath="$PROJECT_DIR$/../actions/.idea/actions.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Downloads/imac/npmrc/.idea/npmrc.iml" filepath="$PROJECT_DIR$/../Downloads/imac/npmrc/.idea/npmrc.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/rc.iml" filepath="$PROJECT_DIR$/.idea/rc.iml" />
     </modules>
   </component>

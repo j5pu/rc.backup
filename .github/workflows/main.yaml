@@ -1,0 +1,20 @@
+name: main
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: make tests
+      - id: tag
+        uses: j5pu/actions/tag@main
+      - run: make release
+        if: steps.tag.outputs.CHANGED == 'true'
+

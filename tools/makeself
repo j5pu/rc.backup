@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# TODO: aqui lo dejo. meter lo de si es grafico. instalar el makeself, tener un apt file de si es grafico
+#   y no se donde dejar el puto Brewfile igual con las variables de entorno de si es grafico en Linux y si no es
+#   container entonces .... crear un tap de las dependencias.
+
+set -eu
+
+git top --help >/dev/null 2>&1 || git-config-system >/dev/null
+
+type makeself.sh >/dev/null || git -C "${PROJECT_DIR}" submodule --quiet update --remote \
+  "$(git -C "${PROJECT_DIR}" config -f .gitmodules "submodule.makeself.path")" 2>/tmp/.submodule \
+  || { cat /tmp/.submodule; rm /tmp/.submodule; exit 1; }
+
+if [ "${1-}" = 'release' ] && [ ! "${GITHUB_RUN_ID-}" ]; then
+  . print.sh
+  false || print Release: Only Allowed from GitHub Actions
+  exit 1
+elif [ "${1-}" != 'release' ]; then
+  tests="/tests"
+fi
+
+dir="${PROJECT_DIR}${tests}/release"; mkdir -p "${dir}"
+target="${dir}/rc.run"
+rm -f "${target}"
+makeself.sh --nocomp "${RC}" "${target}" "RC package" ./install >/dev/null
+[ "${1-}" != 'release' ] || { git add "${target}"; git commit -a --quiet -m "release"; git push; }
+echo "${target}"

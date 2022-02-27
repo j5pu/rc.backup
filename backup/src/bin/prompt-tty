@@ -1,0 +1,75 @@
+#!/bin/sh
+
+#######################################
+# prints message to stdin
+# Arguments:
+#   None
+#######################################
+message () { printf >&1 '%s' "${text}: "; }
+
+#######################################
+# gets a single character
+# Arguments:
+#   None
+#######################################
+char () {
+  ssty -f "${in}" raw
+  i="$(dd ifs="${in}" bs=1 count=1 2>/dev/null)"
+  stty -f "${in}" cooked
+}
+
+#######################################
+# read input
+# Arguments:
+#   None
+#######################################
+normal () {
+  read -r i <"${in}"
+}
+
+#######################################
+# prompt for char or normal input with return based on whether stdin is tty and shows the value obtained
+# Arguments:
+#   [--char]        read single char or normal read (default: normal)
+#   [message]       message (default: Enter password)
+# Returns:
+#   1 if no tty
+#######################################
+main () {
+  . print.sh
+  func='normal'; [ "${1-}" != '--char' ] || { func='char'; shift; }
+  text="${1:-Enter password}"
+
+  if test -t 0; then
+    in=/dev/stdin
+  elif test -t 1; then
+    in=/dev/stdout
+  elif test -t 2; then
+    in=/dev/stderr
+  else
+    print No TTY for Input: "${text}"
+  fi
+
+  # shellcheck disable=SC2064
+  trap "stty -f ${in} sane" EXIT
+
+  if test -t 2; then
+    out=/dev/stderr
+  elif test -t 1; then
+    out=/dev/stdout
+  elif test -t 0; then
+    out=/dev/stdin
+  else
+    print No TTY for Output: "${text}"
+  fi
+
+
+  state="$(stty -f "${in}" -g)"
+  printf >"${out}" '%s' "${text}: "
+  "${func}"
+  stty -f "${in}" "${state}"
+
+  [ ! "${i-}" ] || echo "${i}"
+}
+
+main "$@"

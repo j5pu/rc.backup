@@ -1,0 +1,33 @@
+#!/bin/sh
+
+#
+# System wide git config # https://pip.pypa.io/en/stable/topics/configuration/
+
+type pip3 >/dev/null || exit 0
+. helper.sh && stderr
+
+update() {
+  command="sudo pip3 config --global"
+  previous="$(${command} get "$1" 2>/dev/null || true)"
+  if [ "${previous}" != "$2" ]; then
+    ${command} set "$1" "$2" >/dev/null && show PIP Config: "$1": "${previous}" "=>" "$2"
+  fi
+}
+
+main() {
+  for arg; do
+    case "${arg}" in
+      --force)
+        sudo rm -rf /Library/Application\ Support/pip/pip.conf /etc/pip/pip.conf
+        show --warning Removed: /Library/Application\ Support/pip/pip.conf /etc/pip/pip.conf
+        ;;
+    esac
+  done
+  update global.disable-pip-version-check true
+  update global.no-python-version-warning true
+  update global.use-feature in-tree-build
+  update install.no-warn-script-location true
+  update install.only-binary :all:
+}
+
+main "$@"

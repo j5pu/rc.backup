@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# shellcheck source=/Users/jose/secrets/secrets.sh
+. ~/secrets.sh/secrets.sh
+
+#
+# npm login and sets ~/.npmrc
+# https://github.com/bravissimolabs/docker-generate-npm-authtoken/blob/master/bin/npm.sh
+
+set -eu
+
+NPM_REGISTRY=${NPM_REGISTRY:-https://registry.npmjs.org}
+registry="${NPM_REGISTRY##https:}"
+key="${registry}/:_authToken"
+
+delete() { npm config delete --location user "${key}"; }
+
+get() { awk -F '=' -v key="${key}" '$0 ~ key { print $2 }' ~/.npmrc 2>/dev/null | grep -m 1 "^.*" ;  }
+
+script() {
+  tmp="$(mktemp)"
+  cat > "${tmp}" << EOF
+#!/usr/bin/expect -f
+set timeout 20
+
+eval spawn npm login --registry ${NPM_REGISTRY} ${NPM_SCOPE:+--scope=${NPM_SCOPE}}
+
+expect "Username: "
+send "${NPM_USER}\r";
+
+expect "Password: "
+send "${NPM_TOKEN}\r";
+
+expect "Email: (this IS public) "
+send "${NPM_EMAIL}\r";
+
+$(cat "${tmp_otp}")
+
+expect eof
+
+puts \$expect_out(buffer)
+EOF
+  chmod +x "${tmp}"
+  "${tmp}"
+}
+
+update() { npm config set --location user "${key}"="${NPM_TOKEN}"; }
+
+main() {
+  tmp_otp="$(mktemp)"
+  previous="$(get || true)"
+  for arg; do
+    case "${arg}" in
+      --force) delete ;;
+      --otp=*)
+        NPM_TOKEN="${INTERNET}"
+  cat > "${tmp_otp}" <<EOF
+expect "Enter one-time password: "
+send "${arg##--otp=}\r";
+EOF
+    esac
+  done
+
+  get >/dev/null || script
+}
+
+main "$@"

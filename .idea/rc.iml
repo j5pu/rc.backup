@@ -8,6 +8,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="actions" />
+    <orderEntry type="module" module-name="npmrc" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="format" value="GOOGLE" />

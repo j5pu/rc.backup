@@ -5,3 +5,7 @@
 	path = bats.bash
 	url = https://github.com/j5pu/bats.bash.git
 	branch = main
+[submodule "makeself"]
+	path = share/makeself
+	url = https://github.com/megastep/makeself.git
+	branch = master
