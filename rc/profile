@@ -1,9 +1,0 @@
-# shellcheck shell=sh
-
-#
-# Appended to /etc/profile during installation of rc
-
-# RC path
-#
-export RC="${RC_PREFIX:-/etc}/rc"
-. "${RC}/lib/profile.sh"
