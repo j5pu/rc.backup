@@ -1,1 +1,0 @@
-${NODE_PREFIX:+${NODE_PREFIX}/bin}
