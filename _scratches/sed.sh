@@ -34,9 +34,10 @@ echo
 sed -n '/^\+\{1,\} /p' "${tmp}"
 echo
 sed 's/^\(+\)\1\{0,\} /debug> &/g' "${tmp}"
-
+exit
 echo
 sed 's/^\(+\)\1\{0,\} /debug> &/g; /^debug> /!s/^/stderr> /g' "${tmp}"  # remembering, !s aplica a los que no son find
+
 echo
 sed '/^\+\{0,\} /s/^/debug> /g; /^debug> /!s/^/stderr> /g' "${tmp}"  # finding bit not remembering
 echo
