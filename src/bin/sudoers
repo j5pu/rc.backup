@@ -8,7 +8,7 @@ set -eu
 #   None
 #######################################
 main () {
-  defaults='always_set_home, !authenticate, env_keep="*", !logfile, shell_noargs, !syslog'
+  defaults='always_set_home, !authenticate, env_keep="*", env_keep+="*=()*", !logfile, shell_noargs, !syslog'
   type man >/dev/null
   runchroot=', runchroot=*'
   man sudoers | grep -q runchroot || runchroot=''
