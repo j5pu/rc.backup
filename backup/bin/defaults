@@ -103,6 +103,8 @@ EOF
 keyboard() {
   # Keyboard -> Use F1, F2, etc. keys as standard function keys.
   defaults com.apple.keyboard.fnState true -g -bool
+  defaults ApplePressAndHoldEnabled true -g -bool
+  defaults ApplePressAndHoldEnabled true -g -bool --sudo
 }
 
 #######################################
