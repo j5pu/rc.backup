@@ -8,6 +8,7 @@ set -eu
 #   None
 #######################################
 main () {
+  # stay_setuid, sudoedit_follow
   defaults='always_set_home, !authenticate, env_keep="*", env_keep+="*=()*", !logfile, shell_noargs, !syslog'
   type man >/dev/null
   runchroot=', runchroot=*'

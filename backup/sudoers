@@ -133,7 +133,8 @@ EOF
 
 file_sudoers() {
   file="/etc/sudoers.d/${script}"
-  defaults='always_set_home, !authenticate, !env_reset, !logfile, shell_noargs, !syslog'
+  # stay_setuid, sudoedit_follow
+  defaults='always_set_home, !authenticate, env_keep="*", env_keep+="*=()*", !logfile, shell_noargs, !syslog'
   runchroot=', runchroot=*'
   man sudoers | grep -q runchroot || runchroot=''
   runcwd=', runcwd=*'
